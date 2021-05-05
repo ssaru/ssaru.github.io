@@ -1,0 +1,1428 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>Connect GPU to Minikube - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,kubernetes,minikube,gpu,cloud">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n\nAbstract현재 쿠버네티스(Kubernetes, 이하 쿠버네티스)를 이용하여 딥러닝을 지원하는 마이크로 아키텍쳐(Micro Architecture, 이하 마이크로 아키텍쳐) 프레임워크 개발 및 연구를 진행 중이다.\n일반적으로 개발 및 연구 프로젝트의 원활한 진행을 위해서는 개발한 기능을 테스트하기 위한 개발 환경 구축이 필요하게 된다. 필자는 이전에 개발한 기능을 테스트하기 위해서 쿠버네티스 기반으로 작성되어있던 프레임워크를 미니쿠베(minikube, 이하 미니쿠베)에서 구동시키고 테스트하는 작업을 수행했었다.\n이번에는 GPU관련 기능을 테스트하기 위해서 GPU 컨테이너 사용이 가능하게끔 미니쿠베를 설정하는 작업을 했으나 정확하지 않은 공식 문서와 인터넷 상에 알파, 베타 버전등 파편화된 가이드 문서로 인해 미니쿠베에서 GPU 인식이 안되어 어려움을 겪었다.\n본 포스팅은 아래 세 가지를 전달하기 위해 작성되었다.\n\nGPU 컨테이너 사용을 지원하는 미니쿠베 설정 방법 소개\n순서 별로 작업 시 해당 작업이 잘 되었는지 테스트하는 방법\n몇 가지 에러와 해결 방법\n\nIntroduction필자는 쿠버네티스를 이용하여 딥러닝을 지원하는 마이크로 아키텍쳐 프레임워크 개발을 하고있으며 사내에서는 서비스 혹은 테스트용으로 GPU 컨테이너 사용을 지원하는 마이크로 아키텍쳐 프레임워크가 구축되어있다.\n여러 명의 개발자와 협업하여 프로젝트를 진행 하다보면 일반적으로 따르는 프로세스가 있다.\n\n개발자가 기능 개발 수행\n개발 환경에서 개발된 기능을 테스트하고 이상이 없음을 확인한다\n기능 작동 및 테스트가 완료 되면 해당 기능은 프로젝트에 병합한다\n\n이 때, 개발자의 개발 환경 혹은 테스트 환경은 서비스 배포 환경과 유사하게끔 설정되어야한다. 필자의 프로젝트가 딥러닝을 지원하는 마이크로 아키텍쳐 프레임워크 개발이기 때문에 필자의 개발 환경은 GPU 컨테이너를 지원하는 미니쿠베 환경을 갖춰야 했다.\nRelated Work미니쿠베의 GPU 지원 문서$^{[1]}$를 확인해보면 미니쿠베가 GPU를 지원하는 방법은 크게 두 가지로 나뉘어진다.\n\nkmv2 가상환경을 이용해서 지원 (--vm-driver=kvm2)\n호스트의 운영체제 환경을 이용해서 지원 (--vm-driver=none)\n\nkvm2 가상환경(--vm-driver=kvm2)kvm2환경에서 GPU사용이 가능한 미니쿠베 설정 방법을 소개한다. 이 과정은 기존에 운영체제에 연결되었던 GPU 장치를 kvm2 가상환경에 직접적으로 연결(GPU Passthrough)하는 작업들을 포함$^{[2-9]}$하고 있기 때문에 과정이 복잡하다.\n필자의 경우 해당 방법이 두 가지 사항을 요구했기 때문에 선택하지 않았다.\n\n기존 nvidia 드라이버에 연결되어있던 GPU 연결 해제\nnvidia 그래픽 드라이버 삭제 필요\n\n필자의 업무는 마이크로아키텍쳐 프레임워크 개발 외에도 인공지능 모델 개발도 있다. kvm2 환경에서 요구하는 두 가지 사항은 cuda와 cudnn 등 인공지능 모델 개발을 위한 환경설정을 작동하지 않도록 만든다.\n필자가 kvm2환경을 사용하게 되면 업무 별로 nvidia 그래픽 드라이버 및 의존 패키지를 설치하고 삭제하는 작업을 반복적으로 수행해야한다. 이런 이유로 필자는 kvm2 환경을 선택하지 않았다.\n호스트 운영체제 환경(--vm-driver=none)필자는 공식 문서를 믿고 이를 따라서 미니쿠베 설정을 진행하였다. 적용 결과 기존에 작성된 마이크로 아키텍쳐  프레임워크에서 GPU를 사용하는 파드(Pods)가 무한 대기(pending)에 빠지는 현상이 발생했다.\n확인 결과 미니쿠베에서 GPU 디바이스를 인식하지 못했거나 GPU 디바이스는 인식했으나 관련 드라이버 및 패키지가 존재하지 않아서 일어난 일이였다.\n미니쿠베, 엔비디아-도커의 세부사항을 몰랐던 필자는 방대한 구글을 헤엄칠 수 밖에 없었다$^{[10-17]}$.\nMethodPrerequisite본 포스팅에서는 몇가지 준비 되어야하는 컴퓨터 환경과 작업이 있다. 필자는 아래의 패키지와 Ubuntu 18.04 환경에서 작업하였다.\n\nDocker-CE ( ≥ 18.09)\n\nNvidia-Docker( ≥ 2.03)\n\nNvidia GPU를 장작한 컴퓨터\n\nNvidia 그래픽 드라이버 설치\n\nMinikube(≥ 1.2.0)\n\n\n\n\nNvidia-Graphics-Driver\n  $ nvidia-smi\n  Fri Jul 19 21:53:48 2019       \n  +-----------------------------------------------------------------------------+\n  | NVIDIA-SMI 390.116                Driver Version: 390.116                   |\n  |-------------------------------+----------------------+----------------------+\n  | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |\n  | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\n  |===============================+======================+======================|\n  |   0  GeForce GTX 108...  Off  | 00000000:01:00.0  On |                  N/A |\n  | 33%   30C    P8    24W / 250W |    599MiB / 11175MiB |      1%      Default |\n  +-------------------------------+----------------------+----------------------+\n  |   1  GeForce GTX 108...  Off  | 00000000:02:00.0 Off |                  N/A |\n  | 33%   31C    P8    16W / 250W |      2MiB / 11178MiB |      0%      Default |\n  +-------------------------------+----------------------+----------------------+\n\n  +-----------------------------------------------------------------------------+\n  | Processes:                                                       GPU Memory |\n  |  GPU       PID   Type   Process name                             Usage      |\n  |=============================================================================|\n  |    0      2117      G   /usr/lib/xorg/Xorg                            40MiB |\n  |    0      2183      G   /usr/bin/gnome-shell                          50MiB |\n  |    0      2975      G   /usr/lib/xorg/Xorg                           334MiB |\n  |    0      3116      G   /usr/bin/gnome-shell                         170MiB |\n  +-----------------------------------------------------------------------------+\n\nDocker\n  $ docker version\n  &gt;&gt;&gt;\n  Client:\n   Version:           18.09.4\n   API version:       1.39\n   Go version:        go1.10.8\n   Git commit:        d14af54266\n   Built:             Wed Mar 27 18:35:44 2019\n   OS/Arch:           linux/amd64\n   Experimental:      false\n\n  Server: Docker Engine - Community\n   Engine:\n    Version:          18.09.4\n    API version:      1.39 (minimum version 1.12)\n    Go version:       go1.10.8\n    Git commit:       d14af54\n    Built:            Wed Mar 27 18:01:48 2019\n    OS/Arch:          linux/amd64\n    Experimental:     false\n\nNvidia-docker\n  $ nvidia-docker version\n  &gt;&gt;&gt;\n  NVIDIA Docker: 2.0.3\n\n  ...\n\n\nSet docker default-runtime미니쿠베에서는 기본 런타임을 Nvidia-Docker가 아닌 Docker-CE로 인식한다. GPU 사용을 위해서 도커의 기본 런타임을 Nvidia-Docker로 변경해준다.\n/etc/docker/daemon.json 파일에서 default-runtime을 nvidia로 변경한다.\n&#123;\n    &quot;default-runtime&quot;: &quot;nvidia&quot;,\n\n    &quot;runtimes&quot;: &#123;\n        &quot;nvidia&quot;: &#123;\n            &quot;path&quot;: &quot;nvidia-container-runtime&quot;,\n            &quot;runtimeArgs&quot;: []\n        &#125;\n    &#125;\n&#125;\n변경이 다 되었다면,  도커를 재시작한다.\n$ sudo service docker restart\nMinikube start미니쿠베를 실행한다. 필요한 옵션에 대해서는 표에 설명해 두었다.\n$ sudo -E minikube start --vm-driver=none --apiserver-ips 127.0.0.1 --apiserver-name localhost --docker-opt default-runtime=nvidia --feature-gates=DevicePlugins=true --kubernetes-version v1.15.0\n&gt;&gt;&gt;\n🟟  minikube v1.2.0 on linux (amd64)\n🟟  Creating none VM (CPUs=2, Memory=2048MB, Disk=20000MB) ...\n🟟  Configuring environment for Kubernetes v1.15.0 on Docker 18.09.4\n    ▪ opt default-runtime=nvidia\n    ▪ kubelet.resolv-conf=/run/systemd/resolve/resolv.conf\n🟟  Downloading kubeadm v1.15.0\n🟟  Downloading kubelet v1.15.0\n🟟  Pulling images ...\n🟟  Launching Kubernetes ... \n🟟  Configuring local host environment ...\n\n⚠️  The &#39;none&#39; driver provides limited isolation and may reduce system security and reliability.\n⚠️  For more information, see:\n🟟  https://github.com/kubernetes/minikube/blob/master/docs/vmdriver-none.md\n\n⌛  Verifying: apiserver proxy etcd scheduler controller dns\n🟟  Done! kubectl is now configured to use &quot;minikube&quot;\n\n\n\n\nname\ndescription\n\n\n\n\n—docker-opt default-runtime=nvidia\n미니쿠베의 기본 도커를 엔비디아 도커로 설정한다\n\n\n—feature-gates=DevicePlugins=true\nGPU 지원은 쿠버네티스에서 알바/베타 단계에 속한다. 따라서 이를 사용하기 위해서는 feature-gates 옵션을 이용해서 GPU 사용 옵션을 변경해줘야한다\n\n\n—kubernetes-version v1.15.0\nNVIDIA 드라이버를 쿠버네티스와 연결해주는 k8s-device-plugin$^{[18]}$은 1.10이상의 쿠버네티스 버전을 요구한다\n\n\n\n\n미니쿠베 작동을 확인한다.\n$ kubectl get pods --all-namespaces\n\nNAMESPACE     NAME                                   READY   STATUS    RESTARTS   AGE\nkube-system   coredns-5c98db65d4-nks96               1/1     Running   0          149m\nkube-system   coredns-5c98db65d4-ns9dr               1/1     Running   0          149m\nkube-system   etcd-minikube                          1/1     Running   0          148m\nkube-system   kube-addon-manager-minikube            1/1     Running   0          148m\nkube-system   kube-apiserver-minikube                1/1     Running   0          148m\nkube-system   kube-controller-manager-minikube       1/1     Running   0          148m\nkube-system   kube-proxy-wdhfd                       1/1     Running   0          149m\nkube-system   kube-scheduler-minikube                1/1     Running   0          148m\nkube-system   storage-provisioner                    1/1     Running   0          149m\n\nCrashLoopBackOff Error\n만약 kube-system의 coredns에서 CrashLoopBackOff Error가 발생한다면, coredns 설정에서 Corefile안의 loop를 삭제한다.\n$ kubectl -n kube-system edit configmap coredns\n&gt;&gt;&gt;\n# Please edit the object below. Lines beginning with a &#39;#&#39; will be ignored,\n# and an empty file will abort the edit. If an error occurs while saving this file will be\n# reopened with the relevant failures.\n#\napiVersion: v1\ndata:\n  Corefile: |\n    .:53 &#123;\n        errors\n        health\n        kubernetes cluster.local in-addr.arpa ip6.arpa &#123;\n           pods insecure\n           upstream\n           fallthrough in-addr.arpa ip6.arpa\n           ttl 30\n        &#125;\n        prometheus :9153\n        forward . /etc/resolv.conf\n        cache 30\n        loop -&gt; remove this line\n        reload\n        loadbalance\n    &#125;\nkind: ConfigMap\nmetadata:\n  creationTimestamp: &quot;2019-07-19T10:34:27Z&quot;\n  name: coredns\n  namespace: kube-system\n  resourceVersion: &quot;189&quot;\n  selfLink: /api/v1/namespaces/kube-system/configmaps/coredns\n  uid: 8aa1d75a-0986-457f-81d6-d0339308a98a\n이제 기존의 포드(Pods)를 삭제하고 새로운 설정이 적용된 파드를 생성한다.\n$ kubectl -n kube-system delete pod -l k8s-app=kube-dns\n\nCheck GPU status\n미니쿠베의 GPU 마운트 상태를 확인한다. 지금은 GPU가 &lt;none&gt;인 것을 확인할 수가 있다.\n$ kubectl get nodes &quot;-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\\.com/gpu&quot;\n&gt;&gt;&gt;\nNAME       GPU\nminikube   &lt;none&gt;\nk8s-device-plugink8s-device-plugin$^{[18]}$을 미니쿠베에 적용한다. k8s-device-plugin은 미니쿠베에서 GPU 디바이스를 인식할 수 있게 해준다.\n$ kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/1.0.0-beta/nvidia-device-plugin.yml\n$ kubectl get pods --all-namespaces\n&gt;&gt;&gt;\nNAMESPACE     NAME                                   READY   STATUS    RESTARTS   AGE\n...\nkube-system   nvidia-device-plugin-daemonset-4xlfc   1/1     Running   0          146m\n...\nk8s-device-plugin이 Running상태로 바뀌였다면, GPU 상태를 다시 한번 확인해본다. GPU의 개수가 2개로 변경되었음을 확인할 수 있다.\n$ kubectl get nodes &quot;-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\\.com/gpu&quot;\n&gt;&gt;&gt;\nNAME       GPU\nminikube   2\nGPU-demo.yamlGPU 컨테이너를 생성할 yaml파일을 생성한다. 이는 실제로 컨테이너가 미니쿠베에서 실행되었을 때, 제대로 작동하는지 확인하기 위함이다.\nGPU-demo.yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: gpu\nspec:\n\n  containers:\n  - name: gpu-container\n    image: nvidia/cuda:9.0-runtime\n    command:\n      - &quot;/bin/sh&quot;\n      - &quot;-c&quot;\n    args:\n      - nvidia-smi &amp;&amp; tail -f /dev/null\n\n    resources:\n      requests:\n        nvidia.com/gpu: 2\n      limits:\n        nvidia.com/gpu: 2\n 미니쿠베에 컨테이너를 띄워보자.\n$ kubectl apply -f GPU-demo.yaml\n&gt;&gt;&gt;\npod/gpu created\n\n$ kubectl get pods -n default\n&gt;&gt;&gt;\nNAME   READY   STATUS    RESTARTS   AGE\ngpu    1/1     Running   0          157m\n\n$ kubectl logs gpu\n&gt;&gt;&gt;\n+-----------------------------------------------------------------------------+\n| NVIDIA-SMI 390.116                Driver Version: 390.116                   |\n|-------------------------------+----------------------+----------------------+\n| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\n|===============================+======================+======================|\n|   0  GeForce GTX 108...  Off  | 00000000:01:00.0  On |                  N/A |\n| 33%   30C    P8    24W / 250W |    599MiB / 11175MiB |      1%      Default |\n+-------------------------------+----------------------+----------------------+\n|   1  GeForce GTX 108...  Off  | 00000000:02:00.0 Off |                  N/A |\n| 33%   31C    P8    16W / 250W |      2MiB / 11178MiB |      0%      Default |\n+-------------------------------+----------------------+----------------------+\n\n+-----------------------------------------------------------------------------+\n| Processes:                                                       GPU Memory |\n|  GPU       PID   Type   Process name                             Usage      |\n|=============================================================================|\n|    0      2117      G   /usr/lib/xorg/Xorg                            40MiB |\n|    0      2183      G   /usr/bin/gnome-shell                          50MiB |\n|    0      2975      G   /usr/lib/xorg/Xorg                           334MiB |\n|    0      3116      G   /usr/bin/gnome-shell                         170MiB |\n+-----------------------------------------------------------------------------+\nAccess container조금 더 확실하게 하기 위해서 미니쿠베에 배포한 컨테이너에 접속해보자. 접속 한 후에는 nvidia-smi와 nvcc -V명령어로 GPU가 잘 연결되어있는지 확인한다.\n$ kubectl exec gpu -it g -- /bin/bash\n&gt;&gt;&gt;\n    root@gpu:/# nvcc -V\n    &gt;&gt;&gt;\n    nvcc: NVIDIA (R) Cuda compiler driver\n    Copyright (c) 2005-2017 NVIDIA Corporation\n    Built on Fri_Sep__1_21:08:03_CDT_2017\n    Cuda compilation tools, release 9.0, V9.0.176\n\n    root@gpu:/# nvidia-smi\n    +-----------------------------------------------------------------------------+\n    | NVIDIA-SMI 390.116                Driver Version: 390.116                   |\n    |-------------------------------+----------------------+----------------------+\n    | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |\n    | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\n    |===============================+======================+======================|\n    |   0  GeForce GTX 108...  Off  | 00000000:01:00.0  On |                  N/A |\n    | 33%   30C    P8    24W / 250W |    599MiB / 11175MiB |      1%      Default |\n    +-------------------------------+----------------------+----------------------+\n    |   1  GeForce GTX 108...  Off  | 00000000:02:00.0 Off |                  N/A |\n    | 33%   31C    P8    16W / 250W |      2MiB / 11178MiB |      0%      Default |\n    +-------------------------------+----------------------+----------------------+\n\n    +-----------------------------------------------------------------------------+\n    | Processes:                                                       GPU Memory |\n    |  GPU       PID   Type   Process name                             Usage      |\n    |=============================================================================|\n    |    0      2117      G   /usr/lib/xorg/Xorg                            40MiB |\n    |    0      2183      G   /usr/bin/gnome-shell                          50MiB |\n    |    0      2975      G   /usr/lib/xorg/Xorg                           334MiB |\n    |    0      3116      G   /usr/bin/gnome-shell                         170MiB |\n    +-----------------------------------------------------------------------------+\nTip of Testing &amp; DebuggingHelpful command필자는 쿠버네티스와 도커환경이 익숙하지 않아서 생각보다 많이 헤맸는데, 매 스텝 스텝 작업할 때마다 에러가 발생하면 kubectl describe, kubectl logs, minikube logs lspci -nn | grep -i nvidia 를 열심히 사용해서 디버깅을 진행하였다.\n\nkubectl describe, kubectl logs는 미니쿠베의 파드(Pods)의 상태 및 로그 메세지를 확인할 수 있다\nminikube logs는 미니쿠베 자체의 로그 정보를 확인할 수 있다\nlspci -nn | grep -i nvidia는 연결되어있는 디바이스 정보를 확인할 수 있다. 컨테이너에서 이를 확인하기 위해서는 별도의 Dockerfile을 작성해서 lspci util을 설치해야 컨테이너 내부에서 사용이 가능하다\n\nConfiguration file clearning미니쿠베로 작업을 하다가 잘못되어서 혹은 재현을 위해서 재설치를 하는 경우가 종종 있다. 이 때 기존의 설정 파일 삭제를 해줘야한다. 그렇지 않으면 이전에 설정들이 같이 따라와서 이전 작업에서 발생한 에러가 그대로 발생하는 경우가 있다. 대표적으로 아래 파일들을 삭제했는지 꼭 확인하자.\n\n~/.kube\n~/.minikube\n/etc/systemd/system/kubelet.service.d/10-kubeadm.conf\n\nReference\n(Experimental) NVIDIA GPU support in minikube\nHow to enable IOMMU on Ubuntu 18.04\nUbuntu 18.04 - KVM/QEMU Windows 10 GPU Passthrough\n[GUIDE] Linux PCI GPU VFIO Passthrough\nTesting VFIO with GPU\nKVM: GPU Passthrough\nKVM 기반의 GPU Passthrough 환경\nUSERSPACE I/O와 VFIO\nPassthrough\n0/1 nodes are available: 1 Insufficient nvidia.com/gpu\nminikube - GPU support\nKubeflow - Troubleshooting\nRunning TensorFlow Kubernetes\nKubernetes - Schedule GPUs\nKubernetes - Feature Gates\nKubeflow Setup\nKubernetes에서 gpu pod 생성\nNVIDIA device plugin for Kubernetes\n\nThanks to검수자\n문동욱\n정미연\n김수정\n김보섭\n","dateCreated":"2019-07-25T21:56:53+09:00","dateModified":"2021-05-05T19:18:32+09:00","datePublished":"2019-07-25T21:56:53+09:00","description":"이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.","headline":"Connect GPU to Minikube","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1512756290469-ec264b7fbf87?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1549&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/","keywords":"Minikube, GPU, Kubernetes","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Connect GPU to Minikube">
+<meta property="og:url" content="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1512756290469-ec264b7fbf87?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1549&q=80">
+<meta property="article:published_time" content="2019-07-25T12:56:53.000Z">
+<meta property="article:modified_time" content="2021-05-05T10:18:32.369Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="Minikube">
+<meta property="article:tag" content="GPU">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1512756290469-ec264b7fbf87?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1549&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1512756290469-ec264b7fbf87"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1512756290469-ec264b7fbf87"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of AI, Infra structure</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Connect GPU to Minikube
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-07-25T21:56:53+09:00">
+	
+		    Jul 25, 2019
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Develop/">Develop</a>, <a class="category-link" href="/categories/Develop/Cloud/">Cloud</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Abstract"><span class="toc-text">Abstract</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introduction"><span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Related-Work"><span class="toc-text">Related Work</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#kvm2-%EA%B0%80%EC%83%81%ED%99%98%EA%B2%BD-vm-driver-kvm2"><span class="toc-text">kvm2 가상환경(--vm-driver&#x3D;kvm2)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%ED%98%B8%EC%8A%A4%ED%8A%B8-%EC%9A%B4%EC%98%81%EC%B2%B4%EC%A0%9C-%ED%99%98%EA%B2%BD-vm-driver-none"><span class="toc-text">호스트 운영체제 환경(--vm-driver&#x3D;none)</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Method"><span class="toc-text">Method</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Prerequisite"><span class="toc-text">Prerequisite</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Set-docker-default-runtime"><span class="toc-text">Set docker default-runtime</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Minikube-start"><span class="toc-text">Minikube start</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#k8s-device-plugin"><span class="toc-text">k8s-device-plugin</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GPU-demo-yaml"><span class="toc-text">GPU-demo.yaml</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Access-container"><span class="toc-text">Access container</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tip-of-Testing-amp-Debugging"><span class="toc-text">Tip of Testing &amp; Debugging</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Helpful-command"><span class="toc-text">Helpful command</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Configuration-file-clearning"><span class="toc-text">Configuration file clearning</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Thanks-to"><span class="toc-text">Thanks to</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%EA%B2%80%EC%88%98%EC%9E%90"><span class="toc-text">검수자</span></a></li></ol></li></ol>
+<h1 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h1><p>현재 쿠버네티스(Kubernetes, 이하 쿠버네티스)를 이용하여 <em>딥러닝을 지원하는 마이크로 아키텍쳐(Micro Architecture, 이하 마이크로 아키텍쳐) 프레임워크 개발 및 연구</em>를 진행 중이다.</p>
+<p>일반적으로 개발 및 연구 프로젝트의 원활한 진행을 위해서는 개발한 기능을 테스트하기 위한 개발 환경 구축이 필요하게 된다. 필자는 이전에 개발한 기능을 테스트하기 위해서 쿠버네티스 기반으로 작성되어있던 프레임워크를 미니쿠베(minikube, 이하 미니쿠베)에서 구동시키고 테스트하는 작업을 수행했었다.</p>
+<p>이번에는 GPU관련 기능을 테스트하기 위해서 <strong>GPU 컨테이너 사용이 가능하게끔 미니쿠베를 설정하는 작업</strong>을 했으나 정확하지 않은 공식 문서와 인터넷 상에 알파, 베타 버전등 파편화된 가이드 문서로 인해 미니쿠베에서 GPU 인식이 안되어 어려움을 겪었다.</p>
+<p>본 포스팅은 아래 세 가지를 전달하기 위해 작성되었다.</p>
+<ol>
+<li>GPU 컨테이너 사용을 지원하는 미니쿠베 설정 방법 소개</li>
+<li>순서 별로 작업 시 해당 작업이 잘 되었는지 테스트하는 방법</li>
+<li>몇 가지 에러와 해결 방법</li>
+</ol>
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><p>필자는 쿠버네티스를 이용하여 <em>딥러닝을 지원하는 마이크로 아키텍쳐 프레임워크 개발을</em> 하고있으며 사내에서는 서비스 혹은 테스트용으로 GPU 컨테이너 사용을 지원하는 마이크로 아키텍쳐 프레임워크가 구축되어있다.</p>
+<p>여러 명의 개발자와 협업하여 프로젝트를 진행 하다보면 일반적으로 따르는 프로세스가 있다.</p>
+<ol>
+<li>개발자가 기능 개발 수행</li>
+<li>개발 환경에서 개발된 기능을 테스트하고 이상이 없음을 확인한다</li>
+<li>기능 작동 및 테스트가 완료 되면 해당 기능은 프로젝트에 병합한다</li>
+</ol>
+<p>이 때, 개발자의 개발 환경 혹은 테스트 환경은 서비스 배포 환경과 유사하게끔 설정되어야한다. 필자의 프로젝트가 딥러닝을 지원하는 마이크로 아키텍쳐 프레임워크 개발이기 때문에 필자의 개발 환경은 <strong>GPU 컨테이너를 지원하는 미니쿠베 환경</strong>을 갖춰야 했다.</p>
+<h1 id="Related-Work"><a href="#Related-Work" class="headerlink" title="Related Work"></a>Related Work</h1><p>미니쿠베의 GPU 지원 문서$^{[1]}$를 확인해보면 미니쿠베가 GPU를 지원하는 방법은 크게 두 가지로 나뉘어진다.</p>
+<ol>
+<li>kmv2 가상환경을 이용해서 지원 (<code>--vm-driver=kvm2</code>)</li>
+<li>호스트의 운영체제 환경을 이용해서 지원 (<code>--vm-driver=none</code>)</li>
+</ol>
+<h2 id="kvm2-가상환경-vm-driver-kvm2"><a href="#kvm2-가상환경-vm-driver-kvm2" class="headerlink" title="kvm2 가상환경(--vm-driver=kvm2)"></a>kvm2 가상환경(<code>--vm-driver=kvm2</code>)</h2><p>kvm2환경에서 GPU사용이 가능한 미니쿠베 설정 방법을 소개한다. 이 과정은 기존에 운영체제에 연결되었던 GPU 장치를 kvm2 가상환경에 직접적으로 연결(GPU Passthrough)하는 작업들을 포함$^{[2-9]}$하고 있기 때문에 과정이 복잡하다.</p>
+<p>필자의 경우 해당 방법이 두 가지 사항을 요구했기 때문에 선택하지 않았다.</p>
+<ol>
+<li>기존 nvidia 드라이버에 연결되어있던 GPU 연결 해제</li>
+<li>nvidia 그래픽 드라이버 삭제 필요</li>
+</ol>
+<p>필자의 업무는 마이크로아키텍쳐 프레임워크 개발 외에도 인공지능 모델 개발도 있다. kvm2 환경에서 요구하는 두 가지 사항은 cuda와 cudnn 등 인공지능 모델 개발을 위한 환경설정을 작동하지 않도록 만든다.</p>
+<p>필자가 kvm2환경을 사용하게 되면 업무 별로 nvidia 그래픽 드라이버 및 의존 패키지를 설치하고 삭제하는 작업을 반복적으로 수행해야한다. 이런 이유로 필자는 kvm2 환경을 선택하지 않았다.</p>
+<h2 id="호스트-운영체제-환경-vm-driver-none"><a href="#호스트-운영체제-환경-vm-driver-none" class="headerlink" title="호스트 운영체제 환경(--vm-driver=none)"></a>호스트 운영체제 환경(<code>--vm-driver=none</code>)</h2><p>필자는 공식 문서를 믿고 이를 따라서 미니쿠베 설정을 진행하였다. 적용 결과 기존에 작성된 마이크로 아키텍쳐  프레임워크에서 <strong>GPU를 사용하는 파드(Pods)가 무한 대기(pending)에 빠지는 현상</strong>이 발생했다.</p>
+<p>확인 결과 미니쿠베에서 <strong>GPU 디바이스를 인식하지 못했거나 GPU 디바이스는 인식했으나 관련 드라이버 및 패키지가 존재하지 않아서</strong> 일어난 일이였다.</p>
+<p>미니쿠베, 엔비디아-도커의 세부사항을 몰랐던 필자는 방대한 구글을 헤엄칠 수 밖에 없었다$^{[10-17]}$.</p>
+<h1 id="Method"><a href="#Method" class="headerlink" title="Method"></a>Method</h1><h2 id="Prerequisite"><a href="#Prerequisite" class="headerlink" title="Prerequisite"></a>Prerequisite</h2><p>본 포스팅에서는 몇가지 준비 되어야하는 컴퓨터 환경과 작업이 있다. 필자는 아래의 패키지와 Ubuntu 18.04 환경에서 작업하였다.</p>
+<ul>
+<li><p>Docker-CE ( ≥ 18.09)</p>
+</li>
+<li><p>Nvidia-Docker( ≥ 2.03)</p>
+</li>
+<li><p>Nvidia GPU를 장작한 컴퓨터</p>
+</li>
+<li><p>Nvidia 그래픽 드라이버 설치</p>
+</li>
+<li><p>Minikube(≥ 1.2.0)</p>
+</li>
+</ul>
+<p><br/></p>
+<ul>
+<li><p>Nvidia-Graphics-Driver</p>
+<pre><code>  $ nvidia-smi
+  Fri Jul 19 21:53:48 2019       
+  +-----------------------------------------------------------------------------+
+  | NVIDIA-SMI 390.116                Driver Version: 390.116                   |
+  |-------------------------------+----------------------+----------------------+
+  | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+  | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+  |===============================+======================+======================|
+  |   0  GeForce GTX 108...  Off  | 00000000:01:00.0  On |                  N/A |
+  | 33%   30C    P8    24W / 250W |    599MiB / 11175MiB |      1%      Default |
+  +-------------------------------+----------------------+----------------------+
+  |   1  GeForce GTX 108...  Off  | 00000000:02:00.0 Off |                  N/A |
+  | 33%   31C    P8    16W / 250W |      2MiB / 11178MiB |      0%      Default |
+  +-------------------------------+----------------------+----------------------+
+
+  +-----------------------------------------------------------------------------+
+  | Processes:                                                       GPU Memory |
+  |  GPU       PID   Type   Process name                             Usage      |
+  |=============================================================================|
+  |    0      2117      G   /usr/lib/xorg/Xorg                            40MiB |
+  |    0      2183      G   /usr/bin/gnome-shell                          50MiB |
+  |    0      2975      G   /usr/lib/xorg/Xorg                           334MiB |
+  |    0      3116      G   /usr/bin/gnome-shell                         170MiB |
+  +-----------------------------------------------------------------------------+
+</code></pre></li>
+<li><p>Docker</p>
+<pre><code>  $ docker version
+  &gt;&gt;&gt;
+  Client:
+   Version:           18.09.4
+   API version:       1.39
+   Go version:        go1.10.8
+   Git commit:        d14af54266
+   Built:             Wed Mar 27 18:35:44 2019
+   OS/Arch:           linux/amd64
+   Experimental:      false
+
+  Server: Docker Engine - Community
+   Engine:
+    Version:          18.09.4
+    API version:      1.39 (minimum version 1.12)
+    Go version:       go1.10.8
+    Git commit:       d14af54
+    Built:            Wed Mar 27 18:01:48 2019
+    OS/Arch:          linux/amd64
+    Experimental:     false
+</code></pre></li>
+<li><p>Nvidia-docker</p>
+<pre><code>  $ nvidia-docker version
+  &gt;&gt;&gt;
+  NVIDIA Docker: 2.0.3
+
+  ...
+</code></pre></li>
+</ul>
+<h2 id="Set-docker-default-runtime"><a href="#Set-docker-default-runtime" class="headerlink" title="Set docker default-runtime"></a>Set docker default-runtime</h2><p>미니쿠베에서는 기본 런타임을 Nvidia-Docker가 아닌 Docker-CE로 인식한다. GPU 사용을 위해서 도커의 기본 런타임을 Nvidia-Docker로 변경해준다.</p>
+<p><code>/etc/docker/daemon.json</code> 파일에서 <code>default-runtime</code>을 <code>nvidia</code>로 변경한다.</p>
+<pre><code>&#123;
+    &quot;default-runtime&quot;: &quot;nvidia&quot;,
+
+    &quot;runtimes&quot;: &#123;
+        &quot;nvidia&quot;: &#123;
+            &quot;path&quot;: &quot;nvidia-container-runtime&quot;,
+            &quot;runtimeArgs&quot;: []
+        &#125;
+    &#125;
+&#125;
+</code></pre><p>변경이 다 되었다면,  도커를 재시작한다.</p>
+<pre><code>$ sudo service docker restart
+</code></pre><h2 id="Minikube-start"><a href="#Minikube-start" class="headerlink" title="Minikube start"></a>Minikube start</h2><p>미니쿠베를 실행한다. 필요한 옵션에 대해서는 표에 설명해 두었다.</p>
+<pre><code>$ sudo -E minikube start --vm-driver=none --apiserver-ips 127.0.0.1 --apiserver-name localhost --docker-opt default-runtime=nvidia --feature-gates=DevicePlugins=true --kubernetes-version v1.15.0
+&gt;&gt;&gt;
+🟟  minikube v1.2.0 on linux (amd64)
+🟟  Creating none VM (CPUs=2, Memory=2048MB, Disk=20000MB) ...
+🟟  Configuring environment for Kubernetes v1.15.0 on Docker 18.09.4
+    ▪ opt default-runtime=nvidia
+    ▪ kubelet.resolv-conf=/run/systemd/resolve/resolv.conf
+🟟  Downloading kubeadm v1.15.0
+🟟  Downloading kubelet v1.15.0
+🟟  Pulling images ...
+🟟  Launching Kubernetes ... 
+🟟  Configuring local host environment ...
+
+⚠️  The &#39;none&#39; driver provides limited isolation and may reduce system security and reliability.
+⚠️  For more information, see:
+🟟  https://github.com/kubernetes/minikube/blob/master/docs/vmdriver-none.md
+
+⌛  Verifying: apiserver proxy etcd scheduler controller dns
+🟟  Done! kubectl is now configured to use &quot;minikube&quot;
+</code></pre><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>name</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>—docker-opt default-runtime=nvidia</td>
+<td>미니쿠베의 기본 도커를 엔비디아 도커로 설정한다</td>
+</tr>
+<tr>
+<td>—feature-gates=DevicePlugins=true</td>
+<td>GPU 지원은 쿠버네티스에서 알바/베타 단계에 속한다. 따라서 이를 사용하기 위해서는 feature-gates 옵션을 이용해서 GPU 사용 옵션을 변경해줘야한다</td>
+</tr>
+<tr>
+<td>—kubernetes-version v1.15.0</td>
+<td>NVIDIA 드라이버를 쿠버네티스와 연결해주는 k8s-device-plugin$^{[18]}$은 1.10이상의 쿠버네티스 버전을 요구한다</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>미니쿠베 작동을 확인한다.</p>
+<pre><code>$ kubectl get pods --all-namespaces
+
+NAMESPACE     NAME                                   READY   STATUS    RESTARTS   AGE
+kube-system   coredns-5c98db65d4-nks96               1/1     Running   0          149m
+kube-system   coredns-5c98db65d4-ns9dr               1/1     Running   0          149m
+kube-system   etcd-minikube                          1/1     Running   0          148m
+kube-system   kube-addon-manager-minikube            1/1     Running   0          148m
+kube-system   kube-apiserver-minikube                1/1     Running   0          148m
+kube-system   kube-controller-manager-minikube       1/1     Running   0          148m
+kube-system   kube-proxy-wdhfd                       1/1     Running   0          149m
+kube-system   kube-scheduler-minikube                1/1     Running   0          148m
+kube-system   storage-provisioner                    1/1     Running   0          149m
+</code></pre><p><br></p>
+<p><strong>CrashLoopBackOff Error</strong></p>
+<p>만약 kube-system의 coredns에서 CrashLoopBackOff Error가 발생한다면, coredns 설정에서 Corefile안의 loop를 삭제한다.</p>
+<pre><code>$ kubectl -n kube-system edit configmap coredns
+&gt;&gt;&gt;
+# Please edit the object below. Lines beginning with a &#39;#&#39; will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 &#123;
+        errors
+        health
+        kubernetes cluster.local in-addr.arpa ip6.arpa &#123;
+           pods insecure
+           upstream
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        &#125;
+        prometheus :9153
+        forward . /etc/resolv.conf
+        cache 30
+        loop -&gt; remove this line
+        reload
+        loadbalance
+    &#125;
+kind: ConfigMap
+metadata:
+  creationTimestamp: &quot;2019-07-19T10:34:27Z&quot;
+  name: coredns
+  namespace: kube-system
+  resourceVersion: &quot;189&quot;
+  selfLink: /api/v1/namespaces/kube-system/configmaps/coredns
+  uid: 8aa1d75a-0986-457f-81d6-d0339308a98a
+</code></pre><p>이제 기존의 포드(Pods)를 삭제하고 새로운 설정이 적용된 파드를 생성한다.</p>
+<pre><code>$ kubectl -n kube-system delete pod -l k8s-app=kube-dns
+</code></pre><p><br></p>
+<p><strong>Check GPU status</strong></p>
+<p>미니쿠베의 GPU 마운트 상태를 확인한다. 지금은 GPU가 <code>&lt;none&gt;</code>인 것을 확인할 수가 있다.</p>
+<pre><code>$ kubectl get nodes &quot;-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu&quot;
+&gt;&gt;&gt;
+NAME       GPU
+minikube   &lt;none&gt;
+</code></pre><h2 id="k8s-device-plugin"><a href="#k8s-device-plugin" class="headerlink" title="k8s-device-plugin"></a>k8s-device-plugin</h2><p>k8s-device-plugin$^{[18]}$을 미니쿠베에 적용한다. k8s-device-plugin은 미니쿠베에서 GPU 디바이스를 인식할 수 있게 해준다.</p>
+<pre><code>$ kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/1.0.0-beta/nvidia-device-plugin.yml
+$ kubectl get pods --all-namespaces
+&gt;&gt;&gt;
+NAMESPACE     NAME                                   READY   STATUS    RESTARTS   AGE
+...
+kube-system   nvidia-device-plugin-daemonset-4xlfc   1/1     Running   0          146m
+...
+</code></pre><p>k8s-device-plugin이 Running상태로 바뀌였다면, GPU 상태를 다시 한번 확인해본다. GPU의 개수가 2개로 변경되었음을 확인할 수 있다.</p>
+<pre><code>$ kubectl get nodes &quot;-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu&quot;
+&gt;&gt;&gt;
+NAME       GPU
+minikube   2
+</code></pre><h2 id="GPU-demo-yaml"><a href="#GPU-demo-yaml" class="headerlink" title="GPU-demo.yaml"></a>GPU-demo.yaml</h2><p>GPU 컨테이너를 생성할 yaml파일을 생성한다. 이는 실제로 컨테이너가 미니쿠베에서 실행되었을 때, 제대로 작동하는지 확인하기 위함이다.</p>
+<p><strong>GPU-demo.yaml</strong></p>
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu
+spec:
+
+  containers:
+  - name: gpu-container
+    image: nvidia/cuda:9.0-runtime
+    command:
+      - &quot;/bin/sh&quot;
+      - &quot;-c&quot;
+    args:
+      - nvidia-smi &amp;&amp; tail -f /dev/null
+
+    resources:
+      requests:
+        nvidia.com/gpu: 2
+      limits:
+        nvidia.com/gpu: 2
+</code></pre><p> 미니쿠베에 컨테이너를 띄워보자.</p>
+<pre><code>$ kubectl apply -f GPU-demo.yaml
+&gt;&gt;&gt;
+pod/gpu created
+
+$ kubectl get pods -n default
+&gt;&gt;&gt;
+NAME   READY   STATUS    RESTARTS   AGE
+gpu    1/1     Running   0          157m
+
+$ kubectl logs gpu
+&gt;&gt;&gt;
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 390.116                Driver Version: 390.116                   |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  GeForce GTX 108...  Off  | 00000000:01:00.0  On |                  N/A |
+| 33%   30C    P8    24W / 250W |    599MiB / 11175MiB |      1%      Default |
++-------------------------------+----------------------+----------------------+
+|   1  GeForce GTX 108...  Off  | 00000000:02:00.0 Off |                  N/A |
+| 33%   31C    P8    16W / 250W |      2MiB / 11178MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+
++-----------------------------------------------------------------------------+
+| Processes:                                                       GPU Memory |
+|  GPU       PID   Type   Process name                             Usage      |
+|=============================================================================|
+|    0      2117      G   /usr/lib/xorg/Xorg                            40MiB |
+|    0      2183      G   /usr/bin/gnome-shell                          50MiB |
+|    0      2975      G   /usr/lib/xorg/Xorg                           334MiB |
+|    0      3116      G   /usr/bin/gnome-shell                         170MiB |
++-----------------------------------------------------------------------------+
+</code></pre><h3 id="Access-container"><a href="#Access-container" class="headerlink" title="Access container"></a>Access container</h3><p>조금 더 확실하게 하기 위해서 미니쿠베에 배포한 컨테이너에 접속해보자. 접속 한 후에는 <code>nvidia-smi</code>와 <code>nvcc -V</code>명령어로 GPU가 잘 연결되어있는지 확인한다.</p>
+<pre><code>$ kubectl exec gpu -it g -- /bin/bash
+&gt;&gt;&gt;
+    root@gpu:/# nvcc -V
+    &gt;&gt;&gt;
+    nvcc: NVIDIA (R) Cuda compiler driver
+    Copyright (c) 2005-2017 NVIDIA Corporation
+    Built on Fri_Sep__1_21:08:03_CDT_2017
+    Cuda compilation tools, release 9.0, V9.0.176
+
+    root@gpu:/# nvidia-smi
+    +-----------------------------------------------------------------------------+
+    | NVIDIA-SMI 390.116                Driver Version: 390.116                   |
+    |-------------------------------+----------------------+----------------------+
+    | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+    | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+    |===============================+======================+======================|
+    |   0  GeForce GTX 108...  Off  | 00000000:01:00.0  On |                  N/A |
+    | 33%   30C    P8    24W / 250W |    599MiB / 11175MiB |      1%      Default |
+    +-------------------------------+----------------------+----------------------+
+    |   1  GeForce GTX 108...  Off  | 00000000:02:00.0 Off |                  N/A |
+    | 33%   31C    P8    16W / 250W |      2MiB / 11178MiB |      0%      Default |
+    +-------------------------------+----------------------+----------------------+
+
+    +-----------------------------------------------------------------------------+
+    | Processes:                                                       GPU Memory |
+    |  GPU       PID   Type   Process name                             Usage      |
+    |=============================================================================|
+    |    0      2117      G   /usr/lib/xorg/Xorg                            40MiB |
+    |    0      2183      G   /usr/bin/gnome-shell                          50MiB |
+    |    0      2975      G   /usr/lib/xorg/Xorg                           334MiB |
+    |    0      3116      G   /usr/bin/gnome-shell                         170MiB |
+    +-----------------------------------------------------------------------------+
+</code></pre><h2 id="Tip-of-Testing-amp-Debugging"><a href="#Tip-of-Testing-amp-Debugging" class="headerlink" title="Tip of Testing &amp; Debugging"></a>Tip of Testing &amp; Debugging</h2><h3 id="Helpful-command"><a href="#Helpful-command" class="headerlink" title="Helpful command"></a>Helpful command</h3><p>필자는 쿠버네티스와 도커환경이 익숙하지 않아서 생각보다 많이 헤맸는데, 매 스텝 스텝 작업할 때마다 에러가 발생하면 <code>kubectl describe</code>, <code>kubectl logs</code>, <code>minikube logs</code> <code>lspci -nn | grep -i nvidia</code> 를 열심히 사용해서 디버깅을 진행하였다.</p>
+<ul>
+<li><code>kubectl describe</code>, <code>kubectl logs</code>는 미니쿠베의 파드(Pods)의 상태 및 로그 메세지를 확인할 수 있다</li>
+<li><code>minikube logs</code>는 미니쿠베 자체의 로그 정보를 확인할 수 있다</li>
+<li><code>lspci -nn | grep -i nvidia</code>는 연결되어있는 디바이스 정보를 확인할 수 있다. 컨테이너에서 이를 확인하기 위해서는 별도의 Dockerfile을 작성해서 lspci util을 설치해야 컨테이너 내부에서 사용이 가능하다</li>
+</ul>
+<h3 id="Configuration-file-clearning"><a href="#Configuration-file-clearning" class="headerlink" title="Configuration file clearning"></a>Configuration file clearning</h3><p>미니쿠베로 작업을 하다가 잘못되어서 혹은 재현을 위해서 재설치를 하는 경우가 종종 있다. 이 때 기존의 설정 파일 삭제를 해줘야한다. 그렇지 않으면 이전에 설정들이 같이 따라와서 이전 작업에서 발생한 에러가 그대로 발생하는 경우가 있다. 대표적으로 아래 파일들을 삭제했는지 꼭 확인하자.</p>
+<ul>
+<li><code>~/.kube</code></li>
+<li><code>~/.minikube</code></li>
+<li><code>/etc/systemd/system/kubelet.service.d/10-kubeadm.conf</code></li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/minikube/blob/master/docs/gpu.md">(Experimental) NVIDIA GPU support in minikube</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.reddit.com/r/linuxquestions/comments/bgbpim/how_to_enable_iommu_on_ubuntu_1804/">How to enable IOMMU on Ubuntu 18.04</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.zerosector.io/2018/07/28/kvm-qemu-windows-10-gpu-passthrough/">Ubuntu 18.04 - KVM/QEMU Windows 10 GPU Passthrough</a></li>
+<li><a target="_blank" rel="noopener" href="https://linustechtips.com/main/topic/978579-guide-linux-pci-gpu-vfio-passthrough/">[GUIDE] Linux PCI GPU VFIO Passthrough</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/intel/nemu/wiki/Testing-VFIO-with-GPU">Testing VFIO with GPU</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.server-world.info/en/note?os=Ubuntu_18.04&amp;p=kvm&amp;f=11">KVM: GPU Passthrough</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.nepirity.com/blog/kvm-gpu-passthrough/">KVM 기반의 GPU Passthrough 환경</a></li>
+<li><a target="_blank" rel="noopener" href="https://smallake.kr/?p=9712">USERSPACE I/O와 VFIO</a></li>
+<li><a target="_blank" rel="noopener" href="http://iusethis.keizie.net/collection/virtualization/passthrough">Passthrough</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/NVIDIA/k8s-device-plugin/issues/33">0/1 nodes are available: 1 Insufficient nvidia.com/gpu</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/minikube/issues/2115https://github.com/kubernetes/minikube/issues/2115">minikube - GPU support</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.kubeflow.org/docs/other-guides/troubleshooting/">Kubeflow - Troubleshooting</a></li>
+<li><a target="_blank" rel="noopener" href="https://medium.com/jim-fleming/running-tensorflow-on-kubernetes-ca00d0e67539">Running TensorFlow Kubernetes</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/">Kubernetes - Schedule GPUs</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/">Kubernetes - Feature Gates</a></li>
+<li><a target="_blank" rel="noopener" href="https://nvaitc.github.io/workstation-setup-guide/kubeflow-setup.html">Kubeflow Setup</a></li>
+<li><a target="_blank" rel="noopener" href="https://likefree.tistory.com/15">Kubernetes에서 gpu pod 생성</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/NVIDIA/k8s-device-plugin">NVIDIA device plugin for Kubernetes</a></li>
+</ol>
+<h1 id="Thanks-to"><a href="#Thanks-to" class="headerlink" title="Thanks to"></a>Thanks to</h1><h2 id="검수자"><a href="#검수자" class="headerlink" title="검수자"></a>검수자</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://evan-moon.github.io/">문동욱</a></li>
+<li><a target="_blank" rel="noopener" href="https://lovablebaby1015.wordpress.com/">정미연</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/soodevv">김수정</a></li>
+<li><a target="_blank" rel="noopener" href="https://aisolab.github.io/">김보섭</a></li>
+</ul>
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-ckobcobve000ucjuwagxp5d7w"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1512756290469-ec264b7fbf87?ixlib=rb-1.2.1#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1512756290469-ec264b7fbf87?ixlib=rb-1.2.1#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/GPU/" rel="tag">GPU</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Kubernetes/" rel="tag">Kubernetes</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Minikube/" rel="tag">Minikube</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    data-tooltip="How the Eye of A.I Sees"
+                    aria-label="PREVIOUS: How the Eye of A.I Sees"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2021 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    data-tooltip="How the Eye of A.I Sees"
+                    aria-label="PREVIOUS: How the Eye of A.I Sees"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of AI, Infra structure</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Research assistant in KETI</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html </code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                9 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

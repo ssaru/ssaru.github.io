@@ -1361,6 +1361,39 @@ $ kubectl logs gpu
                     <hr>
                 </div>
                 
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_%EB%9D%BC%EC%9D%B4%EB%B8%8C%EB%9F%AC%EB%A6%AC">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
             </div>
         </div>
         <div class="modal-footer">
@@ -1368,7 +1401,7 @@ $ kubectl logs gpu
                 data-message-zero="no post found"
                 data-message-one="1 post found"
                 data-message-other="{n} posts found">
-                9 posts found
+                10 posts found
             </p>
         </div>
     </div>

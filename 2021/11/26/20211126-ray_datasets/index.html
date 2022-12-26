@@ -1,0 +1,1178 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>Ray Datasets 사용하기 - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,Ray,Distributed Computing">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n\n\n\n\n글쓰기에 앞서 본 포스팅은 제가 Ray Datasets를 이해하고자 쓰는 글입니다.글의 구성은 1). Ray Datasets에 대한 공식문서 번역, 2). parquet 파일을 Ray Dataset으로 활용하는 방법에 대해서 소개하려고 합니다.\nRay DatasetsRay Dataset은 Ray 라이브러리와 애플리케이션에서 데이터를 불러오고 교환하는데 사용하는 기본적인 방법입니다. Datasets는 map.filter, repartition과 같은 분산 데이터 변환을 기본적으로 제공하고, 다양한 데이터 포맷, 데이터 소스, 분산 프레임워크와 호환됩니다.\n\n개념Ray Datasets는 Distributed Arrow의 구현체입니다. Dataset은 block을 참조하고있는 Ray object의 list로 구성되어있습니다. 각 block은 Python list나 Arrow Table을 가지고있습니다. Dataset에 다수의 block이 있다면, 데이터 병렬 변환 및 수집이 가능합니다.\n다음은 3개의 Arrow table block를 갖는 Dataset을 시각화한 그림입니다. 여기서 각 block은 1,000개의 row를 가지고있다고 가정했습니다.\n\nRay Dataset은 Ray object reference들을 모아놓은 list일 뿐이므로, Ray tasks, actor, 라이브러리 간에 자유롭게 전달할 수 있습니다. 이러한 유연성은 Ray Dataset의 고유한 특징입니다.\nSpark RDDs나 Dask Bags과 비교했을 때, Datasets은 조금 더 기본적인 feature의 집합을 제공하고 단순함을 위해 작업(operation)을 즉시 실행(eagerly)합니다. 이는 사용자가 Datasets를 다른 dataframe type(ds.to_dask())으로 casting할 수 있도록 의도한 것입니다. 다른 dataframe type으로 cating하게되면, 특정 dataframe type에서만 사용할 수 있는 고급 operation을 사용할 수 있게됩니다.\n호환되는 Datasource 리스트는 링크에서 확인할 수 있습니다.\nDatasets 만들기ray.data.range()와 ray.data.from_items()를 이용해서 생성된 데이터로 Ray Datasets를 만들어볼 수 있습니다. 이 때, Datasets는 Plain Python object나 Arrow records를 갖게됩니다.\n1234567891011121314151617181920212223242526import ray# Create a Dataset of Python objects.ds = ray.data.range(10000)# -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&lt;class &#x27;int&#x27;&gt;)ds.take(5)# -&gt; [0, 1, 2, 3, 4]ds.count()# -&gt; 10000# Create a Dataset of Arrow records.ds = ray.data.from_items([&#123;&quot;col1&quot;: i, &quot;col2&quot;: str(i)&#125; for i in range(10000)])# -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&#123;col1: int64, col2: string&#125;)ds.show(5)# -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 0, &#x27;col2&#x27;: &#x27;0&#x27;&#125;)# -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 1, &#x27;col2&#x27;: &#x27;1&#x27;&#125;)# -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 2, &#x27;col2&#x27;: &#x27;2&#x27;&#125;)# -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 3, &#x27;col2&#x27;: &#x27;3&#x27;&#125;)# -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 4, &#x27;col2&#x27;: &#x27;4&#x27;&#125;)ds.schema()# -&gt; col1: int64# -&gt; col2: string\n\nDatasets는 local disk의 파일이나 S3와 같이 원격 datasource로부터 만들 수도 있습니다. pyarrow가 지원하는 filesystem이라면 특정한 파일 위치를 사용하면 됩니다.\n12345678# Read a directory of files in remote storage.ds = ray.data.read_csv(&quot;s3://bucket/path&quot;)# Read multiple local files.ds = ray.data.read_csv([&quot;/path/to/file1&quot;, &quot;/path/to/file2&quot;])# Read multiple directories.ds = ray.data.read_csv([&quot;s3://bucket/path1&quot;, &quot;s3://bucket/path2&quot;])\n\n마지막으로, Ray object store에 있거나 Ray와 호환되는 Distributed DataFrame에 있는 데이터로부터 Dataset을 만들 수 있습니다. 아래 예제는 pandas의 DataFrame과 dask의 dataframe을 Ray Dataset으로 변환하는 예제입니다.\n12345678910import pandas as pdimport dask.dataframe as dd# Create a Dataset from a list of Pandas DataFrame objects.pdf = pd.DataFrame(&#123;&quot;one&quot;: [1, 2, 3], &quot;two&quot;: [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]&#125;)ds = ray.data.from_pandas([pdf])# Create a Dataset from a Dask-on-Ray DataFrame.dask_df = dd.from_pandas(pdf, npartitions=10)ds = ray.data.from_dask(dask_df)\n\nDatasets 저장하기Datasets는 .write_csv(), .write_json(), .write_parquet() API를 통해 local이나 remote storage에 저장할 수 있습니다.\n1234567# Write to csv files in /tmp/output.ray.data.range(10000).write_csv(&quot;/tmp/output&quot;)# -&gt; /tmp/output/data0.csv, /tmp/output/data1.csv, ...# Use repartition to control the number of output files:ray.data.range(10000).repartition(1).write_csv(&quot;/tmp/output2&quot;)# -&gt; /tmp/output2/data0.csv\n\n또한 Dataset을 Ray와 호환되는 Distributed DataFrames로 변환할 수 있습니다.\n12# Convert a Ray Dataset into a Dask-on-Ray DataFrame.dask_df = ds.to_dask()\n\nDataset 변환Datasets는 .map()을 사용하면 병렬적으로 변환작업을 수행할 수 있습니다. 변환(Transformation)은 즉시(eagerly) 실행되며 작업(operation)이 끝날 때까지 blocking됩니다. Datasets는 .filter(), .flat_map()을 지원합니다.\n1234567891011121314ds = ray.data.range(10000)ds = ds.map(lambda x: x * 2)# -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1123.54it/s]# -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&lt;class &#x27;int&#x27;&gt;)ds.take(5)# -&gt; [0, 2, 4, 6, 8]ds.filter(lambda x: x &gt; 5).take(5)# -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1859.63it/s]# -&gt; [6, 8, 10, 12, 14]ds.flat_map(lambda x: [x, -x]).take(5)# -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1568.10it/s]# -&gt; [0, 0, 2, -2, 4]\n\n벡터화 함수(vectorized function)의 장점을 취하고 싶을 때에는 .map_batches()를 사용할 수 있습니다.\n\nfilter, flat_map을 .map_batches()를 통해 구현할 수 있습니다. 이 때, map function은 특정 크기를 갖는 batch 출력을 반환해야합니다.\n\n12345ds = ray.data.range_arrow(10000)ds = ds.map_batches(lambda df: df.applymap(lambda x: x * 2), batch_format=&quot;pandas&quot;)# -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1927.62it/s]ds.take(5)# -&gt; [ArrowRow(&#123;&#x27;value&#x27;: 0&#125;), ArrowRow(&#123;&#x27;value&#x27;: 2&#125;), ...]\n\n변환은 기본적으로 Ray tasks를 사용해서 실행됩니다. 설정이 필요한 변환의 경우 compute=&quot;actors&quot;를 지정합니다. compute=&quot;actors&quot;를 설정하면, Ray는 autoscaling actor pool을 사용하여 변환작업을 실행합니다.\n1234567891011121314151617181920212223# Example of GPU batch inference on an ImageNet model.def preprocess(image: bytes) -&gt; bytes:    return imageclass BatchInferModel:    def __init__(self):        self.model = ImageNetModel()    def __call__(self, batch: pd.DataFrame) -&gt; pd.DataFrame:        return self.model(batch)ds = ray.data.read_binary_files(&quot;s3://bucket/image-dir&quot;)# Preprocess the data.ds = ds.map(preprocess)# -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1123.54it/s]# Apply GPU batch inference with actors, and assign each actor a GPU using# ``num_gpus=1`` (any Ray remote decorator argument can be used here).ds = ds.map_batches(BatchInferModel, compute=&quot;actors&quot;, batch_size=256, num_gpus=1)# -&gt; Map Progress (16 actors 4 pending): 100%|██████| 200/200 [00:07, 27.60it/s]# Save the results.ds.repartition(1).write_json(&quot;s3://bucket/inference-results&quot;)\n\nDatasets의 교환Datasets는 Ray tasks나 actor에 전달할 수 있고 .iter_batches()나 .iter_rows()를 통해 읽어들일 수 있습니다. 이 때, 읽기 작업은 복사를 수행하는 것이 아니라 block들의 reference가 담긴 Ray objects로 전달합니다.\n12345678910@ray.remotedef consume(data: Dataset[int]) -&gt; int:    num_batches = 0    for batch in data.iter_batches():        num_batches += 1    return num_batchesds = ray.data.range(10000)ray.get(consume.remote(ds))# -&gt; 200\n\nDatasets는 sub-datasets로 분리할 수 있습니다. 원하는 분할 개수와 actor의 handle을 split()함수에 전달하면 Locality-aware 분리를 수행할 수 있습니다.\n12345678910111213141516171819202122@ray.remote(num_gpus=1)class Worker:    def __init__(self, rank: int):        pass    def train(self, shard: ray.data.Dataset[int]) -&gt; int:        for batch in shard.iter_batches(batch_size=256):            pass        return shard.count()workers = [Worker.remote(i) for i in range(16)]# -&gt; [Actor(Worker, ...), Actor(Worker, ...), ...]ds = ray.data.range(10000)# -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&lt;class &#x27;int&#x27;&gt;)shards = ds.split(n=16, locality_hints=workers)# -&gt; [Dataset(num_blocks=13, num_rows=650, schema=&lt;class &#x27;int&#x27;&gt;),#     Dataset(num_blocks=13, num_rows=650, schema=&lt;class &#x27;int&#x27;&gt;), ...]ray.get([w.train.remote(s) for s in shards])# -&gt; [650, 650, ...]\n\nCustom DatasourcesDatasets는 python에서 정의된 custom datasource을 사용해서 병렬적으로 read/write작업을 수행할 수 있습니다.\n12345# Read from a custom datasource.ds = ray.data.read_datasource(YourCustomDatasource(), **read_args)# Write to a custom datasource.ds.write_datasource(YourCustomDatasource(), **write_args)\n\n문제상황용량이 매우 큰 parquet 파일들을 읽어들여 Ray tasks에 전달하여 작업해야한다고 했을 때, 이를 Datasets로 처리할 수 있습니다.\n예제 데이터를 parquet 파일로 변환하기json data를 pandas의 DataFrame으로 읽어들이고 이를 sample.parq 이름으로 저장합니다.\n1234567import jsonimport pandas as pdjson_data = &#123;&quot;col1&quot;:&#123;&quot;row1&quot;:1,&quot;row2&quot;:2,&quot;row3&quot;:3&#125;,&quot;col2&quot;:&#123;&quot;row1&quot;:&quot;x&quot;,&quot;row2&quot;:&quot;y&quot;,&quot;row3&quot;:&quot;z&quot;&#125;&#125;df = pd.DataFrame(json_data)df.to_parquet(&quot;./sample/sample.parq&quot;)\n\nRay Dataset을 사용하는 actor를 정의하기Ray의 Dataset을 batch로 처리하는 actor class를 정의합니다.\n123456789101112131415import ray@ray.remoteclass Worker():    def __init__(self, rank: int):        pass    def load_df_from_ds(self, shard: ray.data.Dataset):        l = []        for batch in shard.iter_batches():            df = batch.to_pandas()            l.append(df)            # ... pandas processing                return l\n\nRay Datasets를 생성하기이전에 저장했던 sample.parq을 Ray Dataset으로 만듭니다. \n12345678from pathlib import Pathimport ray# 절대경로 필수data_path = Path(&quot;./sample&quot;).absolute()parq_list = list(map(str, data_path.glob(&quot;*.parq&quot;)))ds = ray.data.read_parquet(parq_list)\n\nRay Datasets Split하기locality-aware을 사용해서 Datasets을 split해줍니다.\n12workers = [Worker.remote(i) for i in range(10)]shards = ds.split(n=10, locality_hints=workers)\n\nSplit한 데이터를 처리하기아래 코드를 실행하여 split한 데이터를 처리합니다.\n123ray.init()print(ray.get([workers[rank].load_df_from_ds.remote(s) for rank, s in enumerate(shards)]))ray.shutdown()\n\n전체코드123456789101112131415161718192021222324252627282930313233343536373839404142434445import jsonfrom pathlib import Pathimport pandas as pdimport ray# Ray 실행ray.init()# Ray actor class 정의@ray.remoteclass Worker():    def __init__(self, rank: int):        pass    def load_df_from_ds(self, shard: ray.data.Dataset):        l = []        for batch in shard.iter_batches():            df = batch.to_pandas()            l.append(df)            # ... pandas processing                return l# 샘플 데이터 저장json_data = &#123;&quot;col1&quot;:&#123;&quot;row1&quot;:1,&quot;row2&quot;:2,&quot;row3&quot;:3&#125;,&quot;col2&quot;:&#123;&quot;row1&quot;:&quot;x&quot;,&quot;row2&quot;:&quot;y&quot;,&quot;row3&quot;:&quot;z&quot;&#125;&#125;df = pd.DataFrame(json_data)df.to_parquet(&quot;./sample/sample.parq&quot;)data_path = Path(&quot;./sample&quot;).absolute()# 데이터셋 로드parq_list = list(map(str, data_path.glob(&quot;*.parq&quot;)))ds = ray.data.read_parquet(parq_list)# Ray actor 생성 및 Ray Datasets을 splitworkers = [Worker.remote(i) for i in range(10)]shards = ds.split(n=10, locality_hints=workers)# Ray 코드 실행print(ray.get([workers[rank].load_df_from_ds.remote(s) for rank, s in enumerate(shards)]))# Ray 중지ray.shutdown()\n\n\nReference\nDatasets: Flexible Distributed Data Loading\n","dateCreated":"2021-11-26T21:18:00+09:00","dateModified":"2021-12-02T00:55:35+09:00","datePublished":"2021-11-26T21:18:00+09:00","description":"이번 포스팅은 Ray에서 제공하는 Dataset에 대해서 알아봅니다.","headline":"Ray Datasets 사용하기","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1480843669328-3f7e37d196ae?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2021/11/26/20211126-ray_datasets/","keywords":"Python, Distributed, Parallel, Ray","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="이번 포스팅은 Ray에서 제공하는 Dataset에 대해서 알아봅니다.">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Ray Datasets 사용하기">
+<meta property="og:url" content="http://ssaru.github.io/2021/11/26/20211126-ray_datasets/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="이번 포스팅은 Ray에서 제공하는 Dataset에 대해서 알아봅니다.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1480843669328-3f7e37d196ae?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80">
+<meta property="article:published_time" content="2021-11-26T12:18:00.000Z">
+<meta property="article:modified_time" content="2021-12-01T15:55:35.201Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Distributed">
+<meta property="article:tag" content="Parallel">
+<meta property="article:tag" content="Ray">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1480843669328-3f7e37d196ae?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2021/11/26/20211126-ray_datasets/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2021/11/26/20211126-ray_datasets/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2021/11/26/20211126-ray_datasets/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2021/11/26/20211126-ray_datasets/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1480843669328-3f7e37d196ae"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1480843669328-3f7e37d196ae"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2021/11/26/20211126-ray_datasets/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Ray Datasets 사용하기
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-11-26T21:18:00+09:00">
+	
+		    Nov 26, 2021
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Software/">Software</a>, <a class="category-link" href="/categories/Software/Disbritubed-Computing/">Disbritubed Computing</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+
+
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Ray-Datasets"><span class="toc-text">Ray Datasets</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EA%B0%9C%EB%85%90"><span class="toc-text">개념</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Datasets-%EB%A7%8C%EB%93%A4%EA%B8%B0"><span class="toc-text">Datasets 만들기</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Datasets-%EC%A0%80%EC%9E%A5%ED%95%98%EA%B8%B0"><span class="toc-text">Datasets 저장하기</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dataset-%EB%B3%80%ED%99%98"><span class="toc-text">Dataset 변환</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Datasets%EC%9D%98-%EA%B5%90%ED%99%98"><span class="toc-text">Datasets의 교환</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Custom-Datasources"><span class="toc-text">Custom Datasources</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EB%AC%B8%EC%A0%9C%EC%83%81%ED%99%A9"><span class="toc-text">문제상황</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%98%88%EC%A0%9C-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%A5%BC-parquet-%ED%8C%8C%EC%9D%BC%EB%A1%9C-%EB%B3%80%ED%99%98%ED%95%98%EA%B8%B0"><span class="toc-text">예제 데이터를 parquet 파일로 변환하기</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ray-Dataset%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%98%EB%8A%94-actor%EB%A5%BC-%EC%A0%95%EC%9D%98%ED%95%98%EA%B8%B0"><span class="toc-text">Ray Dataset을 사용하는 actor를 정의하기</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ray-Datasets%EB%A5%BC-%EC%83%9D%EC%84%B1%ED%95%98%EA%B8%B0"><span class="toc-text">Ray Datasets를 생성하기</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ray-Datasets-Split%ED%95%98%EA%B8%B0"><span class="toc-text">Ray Datasets Split하기</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Split%ED%95%9C-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%A5%BC-%EC%B2%98%EB%A6%AC%ED%95%98%EA%B8%B0"><span class="toc-text">Split한 데이터를 처리하기</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%A0%84%EC%B2%B4%EC%BD%94%EB%93%9C"><span class="toc-text">전체코드</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+
+<p>글쓰기에 앞서 본 포스팅은 제가 Ray Datasets를 이해하고자 쓰는 글입니다.<br>글의 구성은 1). Ray Datasets에 대한 공식문서 번역, 2). parquet 파일을 Ray Dataset으로 활용하는 방법에 대해서 소개하려고 합니다.</p>
+<h2 id="Ray-Datasets"><a href="#Ray-Datasets" class="headerlink" title="Ray Datasets"></a>Ray Datasets</h2><p><a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/data/dataset.html">Ray Dataset</a>은 Ray 라이브러리와 애플리케이션에서 데이터를 불러오고 교환하는데 사용하는 기본적인 방법입니다. Datasets는 <code>map.filter</code>, <code>repartition</code>과 같은 분산 데이터 변환을 기본적으로 제공하고, 다양한 데이터 포맷, 데이터 소스, 분산 프레임워크와 호환됩니다.</p>
+<p><img src="1.dataset.svg" alt="datasets"></p>
+<h3 id="개념"><a href="#개념" class="headerlink" title="개념"></a>개념</h3><p>Ray Datasets는 <a target="_blank" rel="noopener" href="https://arrow.apache.org/">Distributed Arrow</a>의 구현체입니다. Dataset은 <code>block</code>을 참조하고있는 Ray object의 list로 구성되어있습니다. 각 block은 Python list나 <a target="_blank" rel="noopener" href="https://arrow.apache.org/docs/python/data.html#tables">Arrow Table</a>을 가지고있습니다. Dataset에 다수의 block이 있다면, 데이터 병렬 변환 및 수집이 가능합니다.</p>
+<p>다음은 3개의 Arrow table block를 갖는 Dataset을 시각화한 그림입니다. 여기서 각 block은 1,000개의 row를 가지고있다고 가정했습니다.</p>
+<p><img src="2.dataset-arch.svg" alt="dataset-arch"></p>
+<p>Ray Dataset은 Ray object reference들을 모아놓은 list일 뿐이므로, Ray tasks, actor, 라이브러리 간에 자유롭게 전달할 수 있습니다. 이러한 유연성은 Ray Dataset의 고유한 특징입니다.</p>
+<p>Spark RDDs나 Dask Bags과 비교했을 때, Datasets은 조금 더 기본적인 feature의 집합을 제공하고 단순함을 위해 작업(operation)을 즉시 실행(eagerly)합니다. 이는 사용자가 Datasets를 다른 dataframe type(<code>ds.to_dask()</code>)으로 casting할 수 있도록 의도한 것입니다. 다른 dataframe type으로 cating하게되면, 특정 dataframe type에서만 사용할 수 있는 고급 operation을 사용할 수 있게됩니다.</p>
+<p>호환되는 Datasource 리스트는 <a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/data/dataset.html#datasource-compatibility-matrices">링크</a>에서 확인할 수 있습니다.</p>
+<h3 id="Datasets-만들기"><a href="#Datasets-만들기" class="headerlink" title="Datasets 만들기"></a>Datasets 만들기</h3><p><code>ray.data.range()</code>와 <code>ray.data.from_items()</code>를 이용해서 생성된 데이터로 Ray Datasets를 만들어볼 수 있습니다. 이 때, Datasets는 Plain Python object나 Arrow records를 갖게됩니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> ray</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create a Dataset of Python objects.</span></span><br><span class="line">ds = ray.data.<span class="built_in">range</span>(<span class="number">10000</span>)</span><br><span class="line"><span class="comment"># -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&lt;class &#x27;int&#x27;&gt;)</span></span><br><span class="line"></span><br><span class="line">ds.take(<span class="number">5</span>)</span><br><span class="line"><span class="comment"># -&gt; [0, 1, 2, 3, 4]</span></span><br><span class="line"></span><br><span class="line">ds.count()</span><br><span class="line"><span class="comment"># -&gt; 10000</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Create a Dataset of Arrow records.</span></span><br><span class="line">ds = ray.data.from_items([&#123;<span class="string">&quot;col1&quot;</span>: i, <span class="string">&quot;col2&quot;</span>: <span class="built_in">str</span>(i)&#125; <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">10000</span>)])</span><br><span class="line"><span class="comment"># -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&#123;col1: int64, col2: string&#125;)</span></span><br><span class="line"></span><br><span class="line">ds.show(<span class="number">5</span>)</span><br><span class="line"><span class="comment"># -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 0, &#x27;col2&#x27;: &#x27;0&#x27;&#125;)</span></span><br><span class="line"><span class="comment"># -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 1, &#x27;col2&#x27;: &#x27;1&#x27;&#125;)</span></span><br><span class="line"><span class="comment"># -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 2, &#x27;col2&#x27;: &#x27;2&#x27;&#125;)</span></span><br><span class="line"><span class="comment"># -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 3, &#x27;col2&#x27;: &#x27;3&#x27;&#125;)</span></span><br><span class="line"><span class="comment"># -&gt; ArrowRow(&#123;&#x27;col1&#x27;: 4, &#x27;col2&#x27;: &#x27;4&#x27;&#125;)</span></span><br><span class="line"></span><br><span class="line">ds.schema()</span><br><span class="line"><span class="comment"># -&gt; col1: int64</span></span><br><span class="line"><span class="comment"># -&gt; col2: string</span></span><br></pre></td></tr></table></figure>
+
+<p>Datasets는 local disk의 파일이나 S3와 같이 원격 datasource로부터 만들 수도 있습니다. pyarrow가 지원하는 filesystem이라면 특정한 파일 위치를 사용하면 됩니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Read a directory of files in remote storage.</span></span><br><span class="line">ds = ray.data.read_csv(<span class="string">&quot;s3://bucket/path&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Read multiple local files.</span></span><br><span class="line">ds = ray.data.read_csv([<span class="string">&quot;/path/to/file1&quot;</span>, <span class="string">&quot;/path/to/file2&quot;</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># Read multiple directories.</span></span><br><span class="line">ds = ray.data.read_csv([<span class="string">&quot;s3://bucket/path1&quot;</span>, <span class="string">&quot;s3://bucket/path2&quot;</span>])</span><br></pre></td></tr></table></figure>
+
+<p>마지막으로, Ray object store에 있거나 Ray와 호환되는 Distributed DataFrame에 있는 데이터로부터 Dataset을 만들 수 있습니다. 아래 예제는 <code>pandas</code>의 <code>DataFrame</code>과 <code>dask</code>의 <code>dataframe</code>을 Ray Dataset으로 변환하는 예제입니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> dask.dataframe <span class="keyword">as</span> dd</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create a Dataset from a list of Pandas DataFrame objects.</span></span><br><span class="line">pdf = pd.DataFrame(&#123;<span class="string">&quot;one&quot;</span>: [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>], <span class="string">&quot;two&quot;</span>: [<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>]&#125;)</span><br><span class="line">ds = ray.data.from_pandas([pdf])</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create a Dataset from a Dask-on-Ray DataFrame.</span></span><br><span class="line">dask_df = dd.from_pandas(pdf, npartitions=<span class="number">10</span>)</span><br><span class="line">ds = ray.data.from_dask(dask_df)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Datasets-저장하기"><a href="#Datasets-저장하기" class="headerlink" title="Datasets 저장하기"></a>Datasets 저장하기</h3><p>Datasets는 <code>.write_csv()</code>, <code>.write_json()</code>, <code>.write_parquet()</code> API를 통해 local이나 remote storage에 저장할 수 있습니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Write to csv files in /tmp/output.</span></span><br><span class="line">ray.data.<span class="built_in">range</span>(<span class="number">10000</span>).write_csv(<span class="string">&quot;/tmp/output&quot;</span>)</span><br><span class="line"><span class="comment"># -&gt; /tmp/output/data0.csv, /tmp/output/data1.csv, ...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Use repartition to control the number of output files:</span></span><br><span class="line">ray.data.<span class="built_in">range</span>(<span class="number">10000</span>).repartition(<span class="number">1</span>).write_csv(<span class="string">&quot;/tmp/output2&quot;</span>)</span><br><span class="line"><span class="comment"># -&gt; /tmp/output2/data0.csv</span></span><br></pre></td></tr></table></figure>
+
+<p>또한 Dataset을 Ray와 호환되는 Distributed DataFrames로 변환할 수 있습니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Convert a Ray Dataset into a Dask-on-Ray DataFrame.</span></span><br><span class="line">dask_df = ds.to_dask()</span><br></pre></td></tr></table></figure>
+
+<h3 id="Dataset-변환"><a href="#Dataset-변환" class="headerlink" title="Dataset 변환"></a>Dataset 변환</h3><p>Datasets는 <code>.map()</code>을 사용하면 병렬적으로 변환작업을 수행할 수 있습니다. 변환(Transformation)은 즉시(eagerly) 실행되며 작업(operation)이 끝날 때까지 blocking됩니다. Datasets는 <code>.filter()</code>, <code>.flat_map()</code>을 지원합니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">ds = ray.data.<span class="built_in">range</span>(<span class="number">10000</span>)</span><br><span class="line">ds = ds.<span class="built_in">map</span>(<span class="keyword">lambda</span> x: x * <span class="number">2</span>)</span><br><span class="line"><span class="comment"># -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1123.54it/s]</span></span><br><span class="line"><span class="comment"># -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&lt;class &#x27;int&#x27;&gt;)</span></span><br><span class="line">ds.take(<span class="number">5</span>)</span><br><span class="line"><span class="comment"># -&gt; [0, 2, 4, 6, 8]</span></span><br><span class="line"></span><br><span class="line">ds.<span class="built_in">filter</span>(<span class="keyword">lambda</span> x: x &gt; <span class="number">5</span>).take(<span class="number">5</span>)</span><br><span class="line"><span class="comment"># -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1859.63it/s]</span></span><br><span class="line"><span class="comment"># -&gt; [6, 8, 10, 12, 14]</span></span><br><span class="line"></span><br><span class="line">ds.flat_map(<span class="keyword">lambda</span> x: [x, -x]).take(<span class="number">5</span>)</span><br><span class="line"><span class="comment"># -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1568.10it/s]</span></span><br><span class="line"><span class="comment"># -&gt; [0, 0, 2, -2, 4]</span></span><br></pre></td></tr></table></figure>
+
+<p>벡터화 함수(vectorized function)의 장점을 취하고 싶을 때에는 <code>.map_batches()</code>를 사용할 수 있습니다.</p>
+<blockquote>
+<p><code>filter</code>, <code>flat_map</code>을 <code>.map_batches()</code>를 통해 구현할 수 있습니다. 이 때, map function은 특정 크기를 갖는 batch 출력을 반환해야합니다.</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ds = ray.data.range_arrow(<span class="number">10000</span>)</span><br><span class="line">ds = ds.map_batches(<span class="keyword">lambda</span> df: df.applymap(<span class="keyword">lambda</span> x: x * <span class="number">2</span>), batch_format=<span class="string">&quot;pandas&quot;</span>)</span><br><span class="line"><span class="comment"># -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1927.62it/s]</span></span><br><span class="line">ds.take(<span class="number">5</span>)</span><br><span class="line"><span class="comment"># -&gt; [ArrowRow(&#123;&#x27;value&#x27;: 0&#125;), ArrowRow(&#123;&#x27;value&#x27;: 2&#125;), ...]</span></span><br></pre></td></tr></table></figure>
+
+<p>변환은 기본적으로 Ray tasks를 사용해서 실행됩니다. 설정이 필요한 변환의 경우 <code>compute=&quot;actors&quot;</code>를 지정합니다. <code>compute=&quot;actors&quot;</code>를 설정하면, Ray는 autoscaling actor pool을 사용하여 변환작업을 실행합니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Example of GPU batch inference on an ImageNet model.</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">preprocess</span>(<span class="params">image: <span class="built_in">bytes</span></span>) -&gt; <span class="built_in">bytes</span>:</span></span><br><span class="line">    <span class="keyword">return</span> image</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BatchInferModel</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.model = ImageNetModel()</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span>(<span class="params">self, batch: pd.DataFrame</span>) -&gt; pd.DataFrame:</span></span><br><span class="line">        <span class="keyword">return</span> self.model(batch)</span><br><span class="line"></span><br><span class="line">ds = ray.data.read_binary_files(<span class="string">&quot;s3://bucket/image-dir&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Preprocess the data.</span></span><br><span class="line">ds = ds.<span class="built_in">map</span>(preprocess)</span><br><span class="line"><span class="comment"># -&gt; Map Progress: 100%|████████████████████| 200/200 [00:00&lt;00:00, 1123.54it/s]</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Apply GPU batch inference with actors, and assign each actor a GPU using</span></span><br><span class="line"><span class="comment"># ``num_gpus=1`` (any Ray remote decorator argument can be used here).</span></span><br><span class="line">ds = ds.map_batches(BatchInferModel, compute=<span class="string">&quot;actors&quot;</span>, batch_size=<span class="number">256</span>, num_gpus=<span class="number">1</span>)</span><br><span class="line"><span class="comment"># -&gt; Map Progress (16 actors 4 pending): 100%|██████| 200/200 [00:07, 27.60it/s]</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Save the results.</span></span><br><span class="line">ds.repartition(<span class="number">1</span>).write_json(<span class="string">&quot;s3://bucket/inference-results&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Datasets의-교환"><a href="#Datasets의-교환" class="headerlink" title="Datasets의 교환"></a>Datasets의 교환</h3><p>Datasets는 Ray tasks나 actor에 전달할 수 있고 <code>.iter_batches()</code>나 <code>.iter_rows()</code>를 통해 읽어들일 수 있습니다. 이 때, 읽기 작업은 복사를 수행하는 것이 아니라 block들의 reference가 담긴 Ray objects로 전달합니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">consume</span>(<span class="params">data: Dataset[<span class="built_in">int</span>]</span>) -&gt; <span class="built_in">int</span>:</span></span><br><span class="line">    num_batches = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> batch <span class="keyword">in</span> data.iter_batches():</span><br><span class="line">        num_batches += <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> num_batches</span><br><span class="line"></span><br><span class="line">ds = ray.data.<span class="built_in">range</span>(<span class="number">10000</span>)</span><br><span class="line">ray.get(consume.remote(ds))</span><br><span class="line"><span class="comment"># -&gt; 200</span></span><br></pre></td></tr></table></figure>
+
+<p>Datasets는 sub-datasets로 분리할 수 있습니다. 원하는 분할 개수와 actor의 handle을 <code>split()</code>함수에 전달하면 Locality-aware 분리를 수행할 수 있습니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ray.remote(<span class="params">num_gpus=<span class="number">1</span></span>)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Worker</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, rank: <span class="built_in">int</span></span>):</span></span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">train</span>(<span class="params">self, shard: ray.data.Dataset[<span class="built_in">int</span>]</span>) -&gt; <span class="built_in">int</span>:</span></span><br><span class="line">        <span class="keyword">for</span> batch <span class="keyword">in</span> shard.iter_batches(batch_size=<span class="number">256</span>):</span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">        <span class="keyword">return</span> shard.count()</span><br><span class="line"></span><br><span class="line">workers = [Worker.remote(i) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>)]</span><br><span class="line"><span class="comment"># -&gt; [Actor(Worker, ...), Actor(Worker, ...), ...]</span></span><br><span class="line"></span><br><span class="line">ds = ray.data.<span class="built_in">range</span>(<span class="number">10000</span>)</span><br><span class="line"><span class="comment"># -&gt; Dataset(num_blocks=200, num_rows=10000, schema=&lt;class &#x27;int&#x27;&gt;)</span></span><br><span class="line"></span><br><span class="line">shards = ds.split(n=<span class="number">16</span>, locality_hints=workers)</span><br><span class="line"><span class="comment"># -&gt; [Dataset(num_blocks=13, num_rows=650, schema=&lt;class &#x27;int&#x27;&gt;),</span></span><br><span class="line"><span class="comment">#     Dataset(num_blocks=13, num_rows=650, schema=&lt;class &#x27;int&#x27;&gt;), ...]</span></span><br><span class="line"></span><br><span class="line">ray.get([w.train.remote(s) <span class="keyword">for</span> s <span class="keyword">in</span> shards])</span><br><span class="line"><span class="comment"># -&gt; [650, 650, ...]</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Custom-Datasources"><a href="#Custom-Datasources" class="headerlink" title="Custom Datasources"></a>Custom Datasources</h3><p>Datasets는 python에서 정의된 <a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/data/package-ref.html#custom-datasource-api">custom datasource</a>을 사용해서 병렬적으로 read/write작업을 수행할 수 있습니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Read from a custom datasource.</span></span><br><span class="line">ds = ray.data.read_datasource(YourCustomDatasource(), **read_args)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Write to a custom datasource.</span></span><br><span class="line">ds.write_datasource(YourCustomDatasource(), **write_args)</span><br></pre></td></tr></table></figure>
+
+<h2 id="문제상황"><a href="#문제상황" class="headerlink" title="문제상황"></a>문제상황</h2><p>용량이 매우 큰 parquet 파일들을 읽어들여 Ray tasks에 전달하여 작업해야한다고 했을 때, 이를 Datasets로 처리할 수 있습니다.</p>
+<h3 id="예제-데이터를-parquet-파일로-변환하기"><a href="#예제-데이터를-parquet-파일로-변환하기" class="headerlink" title="예제 데이터를 parquet 파일로 변환하기"></a>예제 데이터를 parquet 파일로 변환하기</h3><p>json data를 pandas의 DataFrame으로 읽어들이고 이를 <code>sample.parq</code> 이름으로 저장합니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"></span><br><span class="line">json_data = &#123;<span class="string">&quot;col1&quot;</span>:&#123;<span class="string">&quot;row1&quot;</span>:<span class="number">1</span>,<span class="string">&quot;row2&quot;</span>:<span class="number">2</span>,<span class="string">&quot;row3&quot;</span>:<span class="number">3</span>&#125;,<span class="string">&quot;col2&quot;</span>:&#123;<span class="string">&quot;row1&quot;</span>:<span class="string">&quot;x&quot;</span>,<span class="string">&quot;row2&quot;</span>:<span class="string">&quot;y&quot;</span>,<span class="string">&quot;row3&quot;</span>:<span class="string">&quot;z&quot;</span>&#125;&#125;</span><br><span class="line">df = pd.DataFrame(json_data)</span><br><span class="line"></span><br><span class="line">df.to_parquet(<span class="string">&quot;./sample/sample.parq&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Ray-Dataset을-사용하는-actor를-정의하기"><a href="#Ray-Dataset을-사용하는-actor를-정의하기" class="headerlink" title="Ray Dataset을 사용하는 actor를 정의하기"></a>Ray Dataset을 사용하는 actor를 정의하기</h3><p>Ray의 Dataset을 batch로 처리하는 actor class를 정의합니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> ray</span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Worker</span>():</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, rank: <span class="built_in">int</span></span>):</span></span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">load_df_from_ds</span>(<span class="params">self, shard: ray.data.Dataset</span>):</span></span><br><span class="line">        l = []</span><br><span class="line">        <span class="keyword">for</span> batch <span class="keyword">in</span> shard.iter_batches():</span><br><span class="line">            df = batch.to_pandas()</span><br><span class="line">            l.append(df)</span><br><span class="line">            <span class="comment"># ... pandas processing</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> l</span><br></pre></td></tr></table></figure>
+
+<h3 id="Ray-Datasets를-생성하기"><a href="#Ray-Datasets를-생성하기" class="headerlink" title="Ray Datasets를 생성하기"></a>Ray Datasets를 생성하기</h3><p>이전에 저장했던 <code>sample.parq</code>을 Ray Dataset으로 만듭니다. </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</span><br><span class="line"><span class="keyword">import</span> ray</span><br><span class="line"></span><br><span class="line"><span class="comment"># 절대경로 필수</span></span><br><span class="line">data_path = Path(<span class="string">&quot;./sample&quot;</span>).absolute()</span><br><span class="line"></span><br><span class="line">parq_list = <span class="built_in">list</span>(<span class="built_in">map</span>(<span class="built_in">str</span>, data_path.glob(<span class="string">&quot;*.parq&quot;</span>)))</span><br><span class="line">ds = ray.data.read_parquet(parq_list)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Ray-Datasets-Split하기"><a href="#Ray-Datasets-Split하기" class="headerlink" title="Ray Datasets Split하기"></a>Ray Datasets Split하기</h3><p>locality-aware을 사용해서 Datasets을 split해줍니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">workers = [Worker.remote(i) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">10</span>)]</span><br><span class="line">shards = ds.split(n=<span class="number">10</span>, locality_hints=workers)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Split한-데이터를-처리하기"><a href="#Split한-데이터를-처리하기" class="headerlink" title="Split한 데이터를 처리하기"></a>Split한 데이터를 처리하기</h3><p>아래 코드를 실행하여 split한 데이터를 처리합니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ray.init()</span><br><span class="line"><span class="built_in">print</span>(ray.get([workers[rank].load_df_from_ds.remote(s) <span class="keyword">for</span> rank, s <span class="keyword">in</span> <span class="built_in">enumerate</span>(shards)]))</span><br><span class="line">ray.shutdown()</span><br></pre></td></tr></table></figure>
+
+<h3 id="전체코드"><a href="#전체코드" class="headerlink" title="전체코드"></a>전체코드</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> ray</span><br><span class="line"></span><br><span class="line"><span class="comment"># Ray 실행</span></span><br><span class="line">ray.init()</span><br><span class="line"></span><br><span class="line"><span class="comment"># Ray actor class 정의</span></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Worker</span>():</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, rank: <span class="built_in">int</span></span>):</span></span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">load_df_from_ds</span>(<span class="params">self, shard: ray.data.Dataset</span>):</span></span><br><span class="line">        l = []</span><br><span class="line">        <span class="keyword">for</span> batch <span class="keyword">in</span> shard.iter_batches():</span><br><span class="line">            df = batch.to_pandas()</span><br><span class="line">            l.append(df)</span><br><span class="line">            <span class="comment"># ... pandas processing</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> l</span><br><span class="line"></span><br><span class="line"><span class="comment"># 샘플 데이터 저장</span></span><br><span class="line">json_data = &#123;<span class="string">&quot;col1&quot;</span>:&#123;<span class="string">&quot;row1&quot;</span>:<span class="number">1</span>,<span class="string">&quot;row2&quot;</span>:<span class="number">2</span>,<span class="string">&quot;row3&quot;</span>:<span class="number">3</span>&#125;,<span class="string">&quot;col2&quot;</span>:&#123;<span class="string">&quot;row1&quot;</span>:<span class="string">&quot;x&quot;</span>,<span class="string">&quot;row2&quot;</span>:<span class="string">&quot;y&quot;</span>,<span class="string">&quot;row3&quot;</span>:<span class="string">&quot;z&quot;</span>&#125;&#125;</span><br><span class="line">df = pd.DataFrame(json_data)</span><br><span class="line"></span><br><span class="line">df.to_parquet(<span class="string">&quot;./sample/sample.parq&quot;</span>)</span><br><span class="line"></span><br><span class="line">data_path = Path(<span class="string">&quot;./sample&quot;</span>).absolute()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 데이터셋 로드</span></span><br><span class="line">parq_list = <span class="built_in">list</span>(<span class="built_in">map</span>(<span class="built_in">str</span>, data_path.glob(<span class="string">&quot;*.parq&quot;</span>)))</span><br><span class="line">ds = ray.data.read_parquet(parq_list)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Ray actor 생성 및 Ray Datasets을 split</span></span><br><span class="line">workers = [Worker.remote(i) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">10</span>)]</span><br><span class="line">shards = ds.split(n=<span class="number">10</span>, locality_hints=workers)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Ray 코드 실행</span></span><br><span class="line"><span class="built_in">print</span>(ray.get([workers[rank].load_df_from_ds.remote(s) <span class="keyword">for</span> rank, s <span class="keyword">in</span> <span class="built_in">enumerate</span>(shards)]))</span><br><span class="line"></span><br><span class="line"><span class="comment"># Ray 중지</span></span><br><span class="line">ray.shutdown()</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/data/dataset.html">Datasets: Flexible Distributed Data Loading</a></li>
+</ol>
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-ckwjb6wod002h7tocawr73gxu"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1480843669328-3f7e37d196ae?ixlib=rb-1.2.1#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1480843669328-3f7e37d196ae?ixlib=rb-1.2.1#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Distributed/" rel="tag">Distributed</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Parallel/" rel="tag">Parallel</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Ray/" rel="tag">Ray</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/30/20220130_wide_and_deep_learning_for_recommender_systems/"
+                    data-tooltip="Wide &amp; Deep Learning for Recommender Systems 리뷰"
+                    aria-label="PREVIOUS: Wide &amp; Deep Learning for Recommender Systems 리뷰"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/09/09/20210907-quit_company/"
+                    data-tooltip="3번째, 퇴사. 그리고 회고"
+                    aria-label="NEXT: 3번째, 퇴사. 그리고 회고"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2022 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/30/20220130_wide_and_deep_learning_for_recommender_systems/"
+                    data-tooltip="Wide &amp; Deep Learning for Recommender Systems 리뷰"
+                    aria-label="PREVIOUS: Wide &amp; Deep Learning for Recommender Systems 리뷰"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/09/09/20210907-quit_company/"
+                    data-tooltip="3번째, 퇴사. 그리고 회고"
+                    aria-label="NEXT: 3번째, 퇴사. 그리고 회고"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2021/11/26/20211126-ray_datasets/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                16 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

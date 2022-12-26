@@ -1,0 +1,1126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>(TIL) Alpine Linux에서 locale 설정하기 - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,Locale,Alpine Linux">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n\nInstalling locale in alpine Linux애플리케이션이 다국어를 지원할 수 있도록 docker image에 다른 locale을 설치하는 것이 필요할 수 있습니다. 올바른 locale이 설치되지 않는다면 텍스트 데이터가 올바르게 표현되지 않는 문제를 겪을 수 있습니다. alpine docker image는 locale, locale-gen 명령어가 존재하지 않으며, apk add locale로 설치를 시도할 경우 locale이라는 패키지가 없다는 에러를 확인할 수 있습니다. alpine에서 locale을 사용하기 위해서는 alpine과 호환되는 locale 패키지를 별도로 설치해줘야합니다. \n(해당 포스팅에서는 명령어는 dockerfile을 기준으로 설명합니다.)\n1234567891011121314151617181920212223FROM alpine:3.6# ---not shown here---# Install language packRUN apk --no-cache add ca-certificates wget &amp;&amp; \\    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub &amp;&amp; \\    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk &amp;&amp; \\    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-bin-2.25-r0.apk &amp;&amp; \\    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-i18n-2.25-r0.apk &amp;&amp; \\    apk add glibc-bin-2.25-r0.apk glibc-i18n-2.25-r0.apk glibc-2.25-r0.apk# install ko_KR locale# Note that locale -a is not available in alpine linux, use `/usr/glibc-compat/bin/locale -a` insteadRUN /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8RUN /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8 &amp;&amp; \\    echo &quot;export LC_ALL=&#x27;ko_KR.UTF-8&#x27;&quot; &gt;&gt; /etc/profile &amp;&amp; \\    echo &quot;export LANG=&#x27;ko_KR.UTF-8&#x27;&quot; &gt;&gt; /etc/profile &amp;&amp; \\    echo &quot;export LANGUAGE=&#x27;ko_KR.UTF-8&#x27;&quot; &gt;&gt; /etc/profileENV LC_ALL=ko_KR.UTF-8# --- not show here---\ninstall locale package123456RUN apk --no-cache add ca-certificates wget &amp;&amp; \\    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub &amp;&amp; \\    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk &amp;&amp; \\    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-bin-2.25-r0.apk &amp;&amp; \\    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-i18n-2.25-r0.apk &amp;&amp; \\    apk add glibc-bin-2.25-r0.apk glibc-i18n-2.25-r0.apk glibc-2.25-r0.apk\n위 명령어는 alpine linux를 지원하는 locale 패키지를 설치합니다. 해당 명령어를 실행하고나면, /usr/glibc-compat/bin 디렉토리에서 locale관련 명령어인 locale과 localedef를 확인할 수 있습니다. \ncompile localelocale관련 패키지를 설치하고나면, 현재 시스템이 사용중인 locale과 사용 가능한 locale을 /usr/glibc-compat/bin/locale 명령어와 /usr/glibc-compat/bin/locale -a로 확인할 수 있습니다. 이를 확인해보면, 내가 사용하고자하는 ko_KR.UTF-8 이 없음을 확인할 수 있습니다. \nlocale을 정의한 파일들은 /usr/glibc-compat/share/i18n/locales 폴더 아래에 있고, charmap(캐릭터맵)에 대한 정보는 /usr/glibc-compat/share/i18n/charmaps 폴더 아래에 있습니다. 이 두 가지 정보가 localedef의 명령어로 컴파일 되며 컴파일을 하게되면 /usr/glibc-compat/lib/locale 폴더에 locale-archive라는 접두사(prefix)를 가진 파일이 생성되게 됩니다.\nko_KR.UTF-8 locale을 사용하기 위해서 아래 명령어로 locale을 컴파일 합니다.\n1RUN /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8\nSet locale이제 locale 관련 패키지도 설치하였고 필요한 locale도 컴파일 해줬으니, 환경변수에 locale을 설정해봅시다.\n12345RUN /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8 &amp;&amp; \\    echo &quot;export LC_ALL=&#x27;ko_KR.UTF-8&#x27;&quot; &gt;&gt; /etc/profile &amp;&amp; \\    echo &quot;export LANG=&#x27;ko_KR.UTF-8&#x27;&quot; &gt;&gt; /etc/profile &amp;&amp; \\    echo &quot;export LANGUAGE=&#x27;ko_KR.UTF-8&#x27;&quot; &gt;&gt; /etc/profileENV LC_ALL=ko_KR.UTF-8\nubuntu는 기본적으로 bash shell을 사용하기 때문에, 환경변수를 로그인 쉘의 경우에는 ~/.bashrc에 미 로그인 쉘에는 /etc/profile에 설정합니다. alpine은 bash shell이 아닌 ash를 제공하는 busybox를 기본 shell로 사용합니다. 따라서 환경변수 설정은 로그인 쉘의 경우 ~/.profile, 미 로그인 쉘은 /etc/profile에 설정해야합니다.\n(저의 경우는 미로그인 쉘을 사용했으므로 환경변수를 /etc/profile에 설정하였습니다.)\nCheck locale setting설정을 완료하고나면, /usr/glibc-compat/bin/locale와 /usr/glibc-compat/bin/locale -a를 통해 locale이 ko_KR.UTF-8로 잘 설정되었음을 확인할 수 있습니다.\n12345678910111213141516171819202122$ /usr/glibc-compat/bin/locale&gt;&gt;LANG=ko_KR.UTF-8LC_CTYPE=&quot;ko_KR.UTF-8&quot;LC_NUMERIC=&quot;ko_KR.UTF-8&quot;LC_TIME=&quot;ko_KR.UTF-8&quot;LC_COLLATE=&quot;ko_KR.UTF-8&quot;LC_MONETARY=&quot;ko_KR.UTF-8&quot;LC_MESSAGES=&quot;ko_KR.UTF-8&quot;LC_PAPER=&quot;ko_KR.UTF-8&quot;LC_NAME=&quot;ko_KR.UTF-8&quot;LC_ADDRESS=&quot;ko_KR.UTF-8&quot;LC_TELEPHONE=&quot;ko_KR.UTF-8&quot;LC_MEASUREMENT=&quot;ko_KR.UTF-8&quot;LC_IDENTIFICATION=&quot;ko_KR.UTF-8&quot;LC_ALL=ko_KR.UTF-8$ /usr/glibc-compat/bin/locale -a&gt;&gt;CPOSIXko_KR.utf8\nReference\nSetting up locale on alpine:3.6 docker image\n컨테이너 접속시 locale 에러 해결\nWhere to set system default environment variables in Alpine linux?\n","dateCreated":"2021-05-09T16:14:00+09:00","dateModified":"2021-11-26T21:08:48+09:00","datePublished":"2021-05-09T16:14:00+09:00","description":"Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 glibc 대신 musl libc 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 apk add locale 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.","headline":"(TIL) Alpine Linux에서 locale 설정하기","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/","keywords":"Alpine Linux, Locale","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 glibc 대신 musl libc 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 lo">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="(TIL) Alpine Linux에서 locale 설정하기">
+<meta property="og:url" content="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 glibc 대신 musl libc 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 lo">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80">
+<meta property="article:published_time" content="2021-05-09T07:14:00.000Z">
+<meta property="article:modified_time" content="2021-11-26T12:08:48.998Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="Alpine Linux">
+<meta property="article:tag" content="Locale">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1434030216411-0b793f4b4173"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1434030216411-0b793f4b4173"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            (TIL) Alpine Linux에서 locale 설정하기
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-05-09T16:14:00+09:00">
+	
+		    May 09, 2021
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/TIL/">TIL</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Installing-locale-in-alpine-Linux"><span class="toc-text">Installing locale in alpine Linux</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#install-locale-package"><span class="toc-text">install locale package</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#compile-locale"><span class="toc-text">compile locale</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Set-locale"><span class="toc-text">Set locale</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Check-locale-setting"><span class="toc-text">Check locale setting</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+<h2 id="Installing-locale-in-alpine-Linux"><a href="#Installing-locale-in-alpine-Linux" class="headerlink" title="Installing locale in alpine Linux"></a>Installing locale in alpine Linux</h2><p>애플리케이션이 다국어를 지원할 수 있도록 docker image에 다른 locale을 설치하는 것이 필요할 수 있습니다. 올바른 locale이 설치되지 않는다면 텍스트 데이터가 올바르게 표현되지 않는 문제를 겪을 수 있습니다. alpine docker image는 <code>locale</code>, <code>locale-gen</code> 명령어가 존재하지 않으며, <code>apk add locale</code>로 설치를 시도할 경우 locale이라는 패키지가 없다는 에러를 확인할 수 있습니다. alpine에서 locale을 사용하기 위해서는 alpine과 호환되는 locale 패키지를 별도로 설치해줘야합니다. </p>
+<p>(해당 포스팅에서는 명령어는 dockerfile을 기준으로 설명합니다.)</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> alpine:<span class="number">3.6</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ---not shown here---</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Install language pack</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apk --no-cache add ca-certificates wget &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-bin-2.25-r0.apk &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-i18n-2.25-r0.apk &amp;&amp; \</span></span><br><span class="line"><span class="bash">    apk add glibc-bin-2.25-r0.apk glibc-i18n-2.25-r0.apk glibc-2.25-r0.apk</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># install ko_KR locale</span></span><br><span class="line"><span class="comment"># Note that locale -a is not available in alpine linux, use `/usr/glibc-compat/bin/locale -a` instead</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8 &amp;&amp; \</span></span><br><span class="line"><span class="bash">    <span class="built_in">echo</span> <span class="string">&quot;export LC_ALL=&#x27;ko_KR.UTF-8&#x27;&quot;</span> &gt;&gt; /etc/profile &amp;&amp; \</span></span><br><span class="line"><span class="bash">    <span class="built_in">echo</span> <span class="string">&quot;export LANG=&#x27;ko_KR.UTF-8&#x27;&quot;</span> &gt;&gt; /etc/profile &amp;&amp; \</span></span><br><span class="line"><span class="bash">    <span class="built_in">echo</span> <span class="string">&quot;export LANGUAGE=&#x27;ko_KR.UTF-8&#x27;&quot;</span> &gt;&gt; /etc/profile</span></span><br><span class="line"><span class="keyword">ENV</span> LC_ALL=ko_KR.UTF-<span class="number">8</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># --- not show here---</span></span><br></pre></td></tr></table></figure>
+<h3 id="install-locale-package"><a href="#install-locale-package" class="headerlink" title="install locale package"></a>install locale package</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">RUN</span><span class="bash"> apk --no-cache add ca-certificates wget &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-bin-2.25-r0.apk &amp;&amp; \</span></span><br><span class="line"><span class="bash">    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-i18n-2.25-r0.apk &amp;&amp; \</span></span><br><span class="line"><span class="bash">    apk add glibc-bin-2.25-r0.apk glibc-i18n-2.25-r0.apk glibc-2.25-r0.apk</span></span><br></pre></td></tr></table></figure>
+<p>위 명령어는 alpine linux를 지원하는 <code>locale</code> 패키지를 설치합니다. 해당 명령어를 실행하고나면, <code>/usr/glibc-compat/bin</code> 디렉토리에서 locale관련 명령어인 <code>locale</code>과 <code>localedef</code>를 확인할 수 있습니다. </p>
+<h3 id="compile-locale"><a href="#compile-locale" class="headerlink" title="compile locale"></a>compile locale</h3><p><code>locale</code>관련 패키지를 설치하고나면, 현재 시스템이 사용중인 locale과 사용 가능한 locale을 <code>/usr/glibc-compat/bin/locale</code> 명령어와 <code>/usr/glibc-compat/bin/locale -a</code>로 확인할 수 있습니다. 이를 확인해보면, 내가 사용하고자하는 <code>ko_KR.UTF-8</code> 이 없음을 확인할 수 있습니다. </p>
+<p>locale을 정의한 파일들은 <code>/usr/glibc-compat/share/i18n/locales</code> 폴더 아래에 있고, charmap(캐릭터맵)에 대한 정보는 <code>/usr/glibc-compat/share/i18n/charmaps</code> 폴더 아래에 있습니다. 이 두 가지 정보가 <code>localedef</code>의 명령어로 컴파일 되며 컴파일을 하게되면 <code>/usr/glibc-compat/lib/locale</code> 폴더에 <code>locale-archive</code>라는 접두사(prefix)를 가진 파일이 생성되게 됩니다.</p>
+<p><code>ko_KR.UTF-8</code> locale을 사용하기 위해서 아래 명령어로 locale을 컴파일 합니다.</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">RUN</span><span class="bash"> /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8</span></span><br></pre></td></tr></table></figure>
+<h3 id="Set-locale"><a href="#Set-locale" class="headerlink" title="Set locale"></a>Set locale</h3><p>이제 locale 관련 패키지도 설치하였고 필요한 locale도 컴파일 해줬으니, 환경변수에 locale을 설정해봅시다.</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">RUN</span><span class="bash"> /usr/glibc-compat/bin/localedef -i ko_KR -f UTF-8 ko_KR.UTF-8 &amp;&amp; \</span></span><br><span class="line"><span class="bash">    <span class="built_in">echo</span> <span class="string">&quot;export LC_ALL=&#x27;ko_KR.UTF-8&#x27;&quot;</span> &gt;&gt; /etc/profile &amp;&amp; \</span></span><br><span class="line"><span class="bash">    <span class="built_in">echo</span> <span class="string">&quot;export LANG=&#x27;ko_KR.UTF-8&#x27;&quot;</span> &gt;&gt; /etc/profile &amp;&amp; \</span></span><br><span class="line"><span class="bash">    <span class="built_in">echo</span> <span class="string">&quot;export LANGUAGE=&#x27;ko_KR.UTF-8&#x27;&quot;</span> &gt;&gt; /etc/profile</span></span><br><span class="line"><span class="keyword">ENV</span> LC_ALL=ko_KR.UTF-<span class="number">8</span></span><br></pre></td></tr></table></figure>
+<p>ubuntu는 기본적으로 bash shell을 사용하기 때문에, 환경변수를 로그인 쉘의 경우에는 <code>~/.bashrc</code>에 미 로그인 쉘에는 <code>/etc/profile</code>에 설정합니다. alpine은 bash shell이 아닌 ash를 제공하는 busybox를 기본 shell로 사용합니다. 따라서 환경변수 설정은 로그인 쉘의 경우 <code>~/.profile</code>, 미 로그인 쉘은 <code>/etc/profile</code>에 설정해야합니다.</p>
+<p>(저의 경우는 미로그인 쉘을 사용했으므로 환경변수를 <code>/etc/profile</code>에 설정하였습니다.)</p>
+<h2 id="Check-locale-setting"><a href="#Check-locale-setting" class="headerlink" title="Check locale setting"></a>Check locale setting</h2><p>설정을 완료하고나면, <code>/usr/glibc-compat/bin/locale</code>와 <code>/usr/glibc-compat/bin/locale -a</code>를 통해 locale이 <code>ko_KR.UTF-8</code>로 잘 설정되었음을 확인할 수 있습니다.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/glibc-compat/bin/locale</span><br><span class="line">&gt;&gt;</span><br><span class="line">LANG=ko_KR.UTF-8</span><br><span class="line">LC_CTYPE=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_NUMERIC=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_TIME=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_COLLATE=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_MONETARY=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_MESSAGES=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_PAPER=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_NAME=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_ADDRESS=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_TELEPHONE=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_MEASUREMENT=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_IDENTIFICATION=<span class="string">&quot;ko_KR.UTF-8&quot;</span></span><br><span class="line">LC_ALL=ko_KR.UTF-8</span><br><span class="line"></span><br><span class="line">$ /usr/glibc-compat/bin/locale -a</span><br><span class="line">&gt;&gt;</span><br><span class="line">C</span><br><span class="line">POSIX</span><br><span class="line">ko_KR.utf8</span><br></pre></td></tr></table></figure>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://gist.github.com/alextanhongpin/aa55c082a47b9a1b0060a12d85ae7923">Setting up locale on alpine:3.6 docker image</a></li>
+<li><a target="_blank" rel="noopener" href="https://palyoung.tistory.com/12">컨테이너 접속시 locale 에러 해결</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/35325856/where-to-set-system-default-environment-variables-in-alpine-linux">Where to set system default environment variables in Alpine linux?</a></li>
+</ol>
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-ckwjb6woc002f7toc39gx8pf9"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Alpine-Linux/" rel="tag">Alpine Linux</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Locale/" rel="tag">Locale</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/21/20210521-til_gpu_is_lost_reboot_the_system_to_recover_this_gpu/"
+                    data-tooltip="(TIL) GPU is lost. Reboot the system to recover this GPU Error잡기"
+                    aria-label="PREVIOUS: (TIL) GPU is lost. Reboot the system to recover this GPU Error잡기"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                    data-tooltip="(TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                    aria-label="NEXT: (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2022 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/21/20210521-til_gpu_is_lost_reboot_the_system_to_recover_this_gpu/"
+                    data-tooltip="(TIL) GPU is lost. Reboot the system to recover this GPU Error잡기"
+                    aria-label="PREVIOUS: (TIL) GPU is lost. Reboot the system to recover this GPU Error잡기"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                    data-tooltip="(TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                    aria-label="NEXT: (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                16 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

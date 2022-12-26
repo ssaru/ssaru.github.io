@@ -1,0 +1,1012 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>Category: Math - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{}</script>
+    <meta property="og:type" content="blog">
+<meta property="og:title" content="Martin Hwang">
+<meta property="og:url" content="http://ssaru.github.io/categories/Math/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:locale" content="en_US">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="cloud">
+<meta property="article:tag" content="deeplearning">
+<meta property="article:tag" content="signal processing">
+<meta property="article:tag" content="data scientists">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="1">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="1">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="1"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+    <section class="postShorten-group main-content-wrap">
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-left">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            (MML Book 선형대수 Chapter 3.5) Orthonormal Basis
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2020-11-01T22:10:00+09:00">
+	
+		    Nov 01, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Math/">Math</a>
+
+
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p>
+                    
+                        <a
+                            href="/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            Continue reading
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+            <a
+                href="/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+            >
+                <div class="postShorten-thumbnailimg">
+                    <img alt="" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg"/>
+                </div>
+            </a>
+            
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-left">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2020-11-01T21:34:00+09:00">
+	
+		    Nov 01, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Math/">Math</a>
+
+
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p>
+                    
+                        <a
+                            href="/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            Continue reading
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+            <a
+                href="/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+            >
+                <div class="postShorten-thumbnailimg">
+                    <img alt="" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg"/>
+                </div>
+            </a>
+            
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-left">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            (MML Book 선형대수 Chapter 3.3) Lengths and Distances
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2020-11-01T20:53:00+09:00">
+	
+		    Nov 01, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Math/">Math</a>
+
+
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p>
+                    
+                        <a
+                            href="/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            Continue reading
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+            <a
+                href="/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+            >
+                <div class="postShorten-thumbnailimg">
+                    <img alt="" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg"/>
+                </div>
+            </a>
+            
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-left">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2020-09-23T23:31:30+09:00">
+	
+		    Sep 23, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Math/">Math</a>
+
+
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p>
+                    
+                        <a
+                            href="/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            Continue reading
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+            <a
+                href="/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+            >
+                <div class="postShorten-thumbnailimg">
+                    <img alt="" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg"/>
+                </div>
+            </a>
+            
+        
+    </article>
+    
+    <div class="pagination-bar">
+    <ul class="pagination">
+        
+        
+        <li class="pagination-number">page 1 of 1</li>
+    </ul>
+</div>
+
+</section>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2022 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                16 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

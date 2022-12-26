@@ -1,0 +1,1179 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>7가지 코드 - Code 1 - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,MVP,PMF">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n\n\n\n\n\n제품 단계별 전략제품은 크게 2가지 유형이 있다.\n0 to 1\n“0 to 1”은 충족되지 않은 수요 혹은 현재는 사용할 수 없는 공급을 만들어내야한다.  \n기존 제품과 유사 제품을 만들어낸다면 기존 제품보다는 10배 이상 뛰어난 제품을 만들어야한다.\n이 과정에서 시장 적합성(Product Market Fit)을 찾아내야한다.\n\n1 to N“1 to N”은 “1 to 0”에서 시장 적합성을 찾은 제품을 확장하는 단계이다.“1 to N” 전략은 다른 회사들이 모방하기 어렵게하는데 초점이 맞춰져있다.\n\n브랜딩\n네트워크 효과: 메신저를 사용하게되면, 친구가 많은 메신저 앱(카카오톡, 페이스북)에 들어가게된다.\n규모의 경제: 쿠팡을 따라하려면 물류창고나 배송 시스템을 만들어야하는데, 비용이 크기에 따라하기 어렵다.\n카운터 포지셔닝: 쿠팡의 로켓배송은 쿠팡 자체의 차별점이고, 이는 따라하는 것만 해도 어려울 수 있다.\n고유의 기술: OpenAI의 chatGPT같이 공개되어이지 않으나, 독보적인 기술들이 차별점이 될 수 있다.\n전환 비용: 구독 서비스를 이미 사용하고있는 경우, 다른 경쟁 제품으로 넘어가야하는 허들이 생긴다.\n프로세스에 대한 지식: 쿠팡의 물류 프로세스는 모방하기 어렵다.\n획득 자원: 특허와 대규모 인력구성은 따라하기 어렵다.\n\n0 to 1 vs 1 to N\n“0 to 1”과 “1 to N”은 서로 균형을 이루어야한다.\n“1 to N”은 캐시카우로써 지속적인 자금 조달을 한다.\n제품은 영원히 존속하지 않으므로, 변화에 대응하기 위하여 지속적으로 신사업을 찾아내기 위하여 “0 to 1”활동을 지속한다.\n\n0 to 1\n“0 to 1”단계에서는 고객이 무엇을 원하는지 알기 어렵기 때문에 불확실성이 큰 영역이다.\n불확실성이 큰 영역에서 Top Down식의 접근보다는 Bottom Up식의 접근이 유리할 수 있다.\n니치마켓은 비즈니스 규모가 작다. 하지만 자원이 부족한 스타트업은 니치마켓을 노려야한다.\n니치마켓에서 플라이휠을 굴려서 더 큰 사업으로 확장해나가야한다.\n대기업에서는 더 큰 비즈니스 영역에서 사업하므로, 니치마켓은 성가셔할 수 있다.\n1,000명의 열성 팬을 모으기 위하여 투자를 아낌없이 해야한다.\n기술이 제일 중요한 요소가 아니고, 기술혁신에만 집중하다가 잘못될 사례가 있다.(팬암항공)\n오히려 기존 기술을 어떻게 엮어낼지가 더 중요할 수 있다.\n\n\n(개인생각) 결국은 1). 미래에 대한 예측을 얼마나 자주 상상하고 아이데이션 하는지, 2). 작은 비용으로 얼마나 빠르고 자주 실패하는지가 “0 to 1”을 찾아내는 여정이 아닐까 싶다.\n(개인생각) 아이디어 발굴이 어렵다면 사람들 생각을 자주 볼 수 있는 커뮤니티 활동이 좋을 수 있겠다.\n\n가설검증\n제품을 만들 때에는 간단한 가설에 대한 정리를 해보면 좋다.\n가설을 검증하기 위한 방법은 아래와 같은데 위에 있을 수록 비용이 싸고 실제 제품과는 괴리가 있고 순번이 클 수록 비용이 비싸고 실제 제품과 유사한 모양을 띈다.\n\n\n사용자 관찰\n구글 설문\n유저 인터뷰\n프로토 타입\n포스트잇 프로토타입\n와이어 프레임\nMVP -&gt; ETP: MVP에 대한 오해가 있는데, MVP는 제품이 아니다. 따라서 용어를 ETP(Earliest Testable Product)으로 바꾸는게 더 좋을 수 있다.\n컨시어지 MVP: 프론트 화면만 만들고, 복잡한 뒷단은 모두 사람이 수동으로 처리\n페이크 도어 테스트: 실제 제품은 없지만 제품이 있는 듯 광고하거나 메인 페이지만 만들어놓고 유저들 반응을 살피는 것\n\n\n\n\n\n제품화\n가설검증이 충분히 되었다면, 제품을 만들어야하는데 이때의 제품을 MLP(Minimum Lovable Product)라고 한다. MLP단계가 진짜 제품런칭 단계라고 보면 된다.\nMLP는 단순하지만 좋은 제품이어야하고 경험설계가 중요하다.\n아래 사례들은 MLP의 대표사례이다.\n애플 워치 vs 핏비트: 헬스케어시장에서 워치형태의 제품은 핏비트가 먼저 시작했지만 시장점유율은 애플 워치가 더 높았다. 이는 애플 워치로 아이폰을 제어하거나 스타일을 바꿀 수 있게 할 수 있었던 것이 주요 요인으로 보인다.\n닌텐도 스위치: 하드웨어 사양은 좋지 않았지만 이동성(TV로 게임하다가, 덱에서 디바이스를 분리하면 휴대용 게임기), 확장성(혼자서 게임하다가 컨트롤러 분리해서 친구와 같이 게임)이 유저 경험 측면에서 좋았기 때문에 좋지 않은 하드웨어 사양은 큰 문제가 되지 않았다.\n\n\nOOBE 경험 중요: 언박싱의 경험, 첫 인상이 중요하다. 그런 관점에서 첫 페이지에서 보게되는 텅 빈 화면은 좋지 않다. 이 경우 온보딩에 도움이 되는 더미 데이터를 넣는게 유리하다.\n앱을 사용하고 며칠 이내에 제품 가치가 유저에게 유용하다고 인식되어야한다. 이는 리텐션 플레토로 확인할 수 있다.\n 상위 1~10위앱은 리텐션 플레토가 50%\n 상위 11~60위 앱은 42%\n 상위 61~160위 앱은 20%\n 평균 리텐션 플레토는 4%\n\n\n\n\n\n개인적인 생각사이드 프로젝트에서 프론트 페이지만 만들고 백단은 모두 수동으로 진행해서 실제로 유저들이 사용하는지 테스트를 해봤었는데(컨시어지 MVP), 개인적으로 제일 어렵게 느껴졌던 것은 시장 적합성(PMF)를 찾았는지 어떻게 알지? 였던 것 같다. 예를들어 돈을 태워 마케팅을 진행했는데, N명에게 노출되고 0.1% 정도의 극소수 유저만 전환(실 구매)가 일어났는데 이게 적합한지 아닌지 알기 어렵다는 것이었다. 아마 유저획득 비용관점이 너무 크고, 전환율도 좋지 않아서 PMF는 못찾았다고 볼 수도 있을 것 같다. 관련해서 Superhuman이 PMF를 찾는 엔진을 구축한 방법이라는 아티클을 참고해봐도 좋을 것 같다.  \n해당 아티클을 보면 일단 꽤나 많은 유저들을 확보한 상황에서 해당 제품이 가치가 있는지를 판단한 것이라, 어느정도 초기부터 전환유저가 있었던 것으로 보인다. 즉, 제품관점에서 유저들의 반응성은 어느정도 이끌어냈고, 지속적으로 PMF를 맞춰가는 여정처럼 보여서 내가 원하는 대답은 아니었던 것 같다. 아티클에서 언급하는 지표도 후행지표이기 때문에 제품을 런칭하기 전에 PMF를 찾고 들어가야한다고 이야기하신 분도 계셨다.","dateCreated":"2022-12-26T10:49:00+09:00","dateModified":"2022-12-27T02:56:24+09:00","datePublished":"2022-12-26T10:49:00+09:00","description":"7가지 코드 Code 1파트 정리","headline":"7가지 코드 - Code 1","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3484&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/","keywords":"Product","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="7가지 코드 Code 1파트 정리">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="7가지 코드 - Code 1">
+<meta property="og:url" content="http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="7가지 코드 Code 1파트 정리">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3484&q=80">
+<meta property="article:published_time" content="2022-12-26T01:49:00.000Z">
+<meta property="article:modified_time" content="2022-12-26T17:56:24.057Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="Product">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3484&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1523275335684-37898b6baf30"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1523275335684-37898b6baf30"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2022/12/26/20221226-product_management_sacred_seven/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            7가지 코드 - Code 1
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2022-12-26T10:49:00+09:00">
+	
+		    Dec 26, 2022
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Product/">Product</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+
+
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%A0%9C%ED%92%88-%EB%8B%A8%EA%B3%84%EB%B3%84-%EC%A0%84%EB%9E%B5"><span class="toc-text">제품 단계별 전략</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0-to-1"><span class="toc-text">0 to 1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-to-N"><span class="toc-text">1 to N</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0-to-1-vs-1-to-N"><span class="toc-text">0 to 1 vs 1 to N</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0-to-1-1"><span class="toc-text">0 to 1</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EA%B0%80%EC%84%A4%EA%B2%80%EC%A6%9D"><span class="toc-text">가설검증</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%A0%9C%ED%92%88%ED%99%94"><span class="toc-text">제품화</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EA%B0%9C%EC%9D%B8%EC%A0%81%EC%9D%B8-%EC%83%9D%EA%B0%81"><span class="toc-text">개인적인 생각</span></a></li></ol></li></ol>
+
+
+<h2 id="제품-단계별-전략"><a href="#제품-단계별-전략" class="headerlink" title="제품 단계별 전략"></a>제품 단계별 전략</h2><p>제품은 크게 2가지 유형이 있다.</p>
+<h3 id="0-to-1"><a href="#0-to-1" class="headerlink" title="0 to 1"></a>0 to 1</h3><ul>
+<li>“0 to 1”은 충족되지 않은 수요 혹은 현재는 사용할 수 없는 공급을 만들어내야한다.  </li>
+<li>기존 제품과 유사 제품을 만들어낸다면 기존 제품보다는 10배 이상 뛰어난 제품을 만들어야한다.</li>
+<li>이 과정에서 시장 적합성(Product Market Fit)을 찾아내야한다.</li>
+</ul>
+<h3 id="1-to-N"><a href="#1-to-N" class="headerlink" title="1 to N"></a>1 to N</h3><p>“1 to N”은 “1 to 0”에서 시장 적합성을 찾은 제품을 확장하는 단계이다.<br>“1 to N” 전략은 다른 회사들이 모방하기 어렵게하는데 초점이 맞춰져있다.</p>
+<ul>
+<li>브랜딩</li>
+<li>네트워크 효과: 메신저를 사용하게되면, 친구가 많은 메신저 앱(카카오톡, 페이스북)에 들어가게된다.</li>
+<li>규모의 경제: 쿠팡을 따라하려면 물류창고나 배송 시스템을 만들어야하는데, 비용이 크기에 따라하기 어렵다.</li>
+<li>카운터 포지셔닝: 쿠팡의 로켓배송은 쿠팡 자체의 차별점이고, 이는 따라하는 것만 해도 어려울 수 있다.</li>
+<li>고유의 기술: OpenAI의 chatGPT같이 공개되어이지 않으나, 독보적인 기술들이 차별점이 될 수 있다.</li>
+<li>전환 비용: 구독 서비스를 이미 사용하고있는 경우, 다른 경쟁 제품으로 넘어가야하는 허들이 생긴다.</li>
+<li>프로세스에 대한 지식: 쿠팡의 물류 프로세스는 모방하기 어렵다.</li>
+<li>획득 자원: 특허와 대규모 인력구성은 따라하기 어렵다.</li>
+</ul>
+<h3 id="0-to-1-vs-1-to-N"><a href="#0-to-1-vs-1-to-N" class="headerlink" title="0 to 1 vs 1 to N"></a>0 to 1 vs 1 to N</h3><ul>
+<li>“0 to 1”과 “1 to N”은 서로 균형을 이루어야한다.</li>
+<li>“1 to N”은 캐시카우로써 지속적인 자금 조달을 한다.</li>
+<li>제품은 영원히 존속하지 않으므로, 변화에 대응하기 위하여 지속적으로 신사업을 찾아내기 위하여 “0 to 1”활동을 지속한다.</li>
+</ul>
+<h2 id="0-to-1-1"><a href="#0-to-1-1" class="headerlink" title="0 to 1"></a>0 to 1</h2><ul>
+<li>“0 to 1”단계에서는 고객이 무엇을 원하는지 알기 어렵기 때문에 불확실성이 큰 영역이다.</li>
+<li>불확실성이 큰 영역에서 Top Down식의 접근보다는 Bottom Up식의 접근이 유리할 수 있다.</li>
+<li>니치마켓은 비즈니스 규모가 작다. 하지만 자원이 부족한 스타트업은 니치마켓을 노려야한다.</li>
+<li>니치마켓에서 플라이휠을 굴려서 더 큰 사업으로 확장해나가야한다.</li>
+<li>대기업에서는 더 큰 비즈니스 영역에서 사업하므로, 니치마켓은 성가셔할 수 있다.</li>
+<li>1,000명의 열성 팬을 모으기 위하여 투자를 아낌없이 해야한다.</li>
+<li>기술이 제일 중요한 요소가 아니고, 기술혁신에만 집중하다가 잘못될 사례가 있다.(팬암항공)<ul>
+<li>오히려 기존 기술을 어떻게 엮어낼지가 더 중요할 수 있다.</li>
+</ul>
+</li>
+<li>(개인생각) 결국은 1). 미래에 대한 예측을 얼마나 자주 상상하고 아이데이션 하는지, 2). 작은 비용으로 얼마나 빠르고 자주 실패하는지가 “0 to 1”을 찾아내는 여정이 아닐까 싶다.</li>
+<li>(개인생각) 아이디어 발굴이 어렵다면 사람들 생각을 자주 볼 수 있는 커뮤니티 활동이 좋을 수 있겠다.</li>
+</ul>
+<h3 id="가설검증"><a href="#가설검증" class="headerlink" title="가설검증"></a>가설검증</h3><ul>
+<li>제품을 만들 때에는 간단한 가설에 대한 정리를 해보면 좋다.</li>
+<li>가설을 검증하기 위한 방법은 아래와 같은데 위에 있을 수록 비용이 싸고 실제 제품과는 괴리가 있고 순번이 클 수록 비용이 비싸고 실제 제품과 유사한 모양을 띈다.</li>
+</ul>
+<ol>
+<li>사용자 관찰</li>
+<li>구글 설문</li>
+<li>유저 인터뷰</li>
+<li>프로토 타입<ol>
+<li>포스트잇 프로토타입</li>
+<li>와이어 프레임</li>
+<li>MVP -&gt; ETP: MVP에 대한 오해가 있는데, MVP는 제품이 아니다. 따라서 용어를 ETP(Earliest Testable Product)으로 바꾸는게 더 좋을 수 있다.<ol>
+<li>컨시어지 MVP: 프론트 화면만 만들고, 복잡한 뒷단은 모두 사람이 수동으로 처리</li>
+<li>페이크 도어 테스트: 실제 제품은 없지만 제품이 있는 듯 광고하거나 메인 페이지만 만들어놓고 유저들 반응을 살피는 것</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h3 id="제품화"><a href="#제품화" class="headerlink" title="제품화"></a>제품화</h3><ul>
+<li>가설검증이 충분히 되었다면, 제품을 만들어야하는데 이때의 제품을 MLP(Minimum Lovable Product)라고 한다. MLP단계가 진짜 제품런칭 단계라고 보면 된다.</li>
+<li>MLP는 단순하지만 좋은 제품이어야하고 경험설계가 중요하다.<ul>
+<li>아래 사례들은 MLP의 대표사례이다.</li>
+<li>애플 워치 vs 핏비트: 헬스케어시장에서 워치형태의 제품은 핏비트가 먼저 시작했지만 시장점유율은 애플 워치가 더 높았다. 이는 애플 워치로 아이폰을 제어하거나 스타일을 바꿀 수 있게 할 수 있었던 것이 주요 요인으로 보인다.</li>
+<li>닌텐도 스위치: 하드웨어 사양은 좋지 않았지만 이동성(TV로 게임하다가, 덱에서 디바이스를 분리하면 휴대용 게임기), 확장성(혼자서 게임하다가 컨트롤러 분리해서 친구와 같이 게임)이 유저 경험 측면에서 좋았기 때문에 좋지 않은 하드웨어 사양은 큰 문제가 되지 않았다.</li>
+</ul>
+</li>
+<li>OOBE 경험 중요: 언박싱의 경험, 첫 인상이 중요하다. 그런 관점에서 첫 페이지에서 보게되는 텅 빈 화면은 좋지 않다. 이 경우 온보딩에 도움이 되는 더미 데이터를 넣는게 유리하다.<ul>
+<li>앱을 사용하고 며칠 이내에 제품 가치가 유저에게 유용하다고 인식되어야한다. 이는 리텐션 플레토로 확인할 수 있다.<ul>
+<li> 상위 1~10위앱은 리텐션 플레토가 50%</li>
+<li> 상위 11~60위 앱은 42%</li>
+<li> 상위 61~160위 앱은 20%</li>
+<li> 평균 리텐션 플레토는 4%</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="개인적인-생각"><a href="#개인적인-생각" class="headerlink" title="개인적인 생각"></a>개인적인 생각</h3><p>사이드 프로젝트에서 프론트 페이지만 만들고 백단은 모두 수동으로 진행해서 실제로 유저들이 사용하는지 테스트를 해봤었는데(컨시어지 MVP), 개인적으로 제일 어렵게 느껴졌던 것은 시장 적합성(PMF)를 찾았는지 어떻게 알지? 였던 것 같다. 예를들어 돈을 태워 마케팅을 진행했는데, N명에게 노출되고 0.1% 정도의 극소수 유저만 전환(실 구매)가 일어났는데 이게 적합한지 아닌지 알기 어렵다는 것이었다. 아마 유저획득 비용관점이 너무 크고, 전환율도 좋지 않아서 PMF는 못찾았다고 볼 수도 있을 것 같다. 관련해서 <a target="_blank" rel="noopener" href="https://steady-study.super.site/superhuman-pmf?fbclid=IwAR1aVFkx8o_y3WylS6XhT_r7viSCiPCe9f5o2gYHKRPLkFFj-RpxW9M0ULI">Superhuman이 PMF를 찾는 엔진을 구축한 방법</a>이라는 아티클을 참고해봐도 좋을 것 같다.  </p>
+<p>해당 아티클을 보면 일단 꽤나 많은 유저들을 확보한 상황에서 해당 제품이 가치가 있는지를 판단한 것이라, 어느정도 초기부터 전환유저가 있었던 것으로 보인다. 즉, 제품관점에서 유저들의 반응성은 어느정도 이끌어냈고, 지속적으로 PMF를 맞춰가는 여정처럼 보여서 내가 원하는 대답은 아니었던 것 같다. 아티클에서 언급하는 지표도 후행지표이기 때문에 제품을 런칭하기 전에 PMF를 찾고 들어가야한다고 이야기하신 분도 계셨다.</p>
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-clc46tcpd0000s8oc8o13fors"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Product/" rel="tag">Product</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/02/06/20220206_2022okr/"
+                    data-tooltip="2022 OKR"
+                    aria-label="NEXT: 2022 OKR"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2022 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/02/06/20220206_2022okr/"
+                    data-tooltip="2022 OKR"
+                    aria-label="NEXT: 2022 OKR"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                16 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

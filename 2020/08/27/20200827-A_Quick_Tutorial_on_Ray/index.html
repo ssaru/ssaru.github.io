@@ -1,0 +1,1203 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,Ray,Python,Distributed,Parallel">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n\nRobert Nishihara의 허락을 받아, Modern Parallel and Distributed Python: A Quick Tutorial on Ray을 번역한 글입니다.\nWhat is Ray?Ray는 파이썬에서 병렬, 분산 프로그래밍을 위한 오픈소스 프로젝트입니다.\n병렬, 분산 컴퓨팅은 현대 애플리케이션을 구성하는 요소 중 하나로 자리잡았습니다. 우리는 필요에 따라 멀티코어나 여러 대의 머신의 리소스를 최대한 활용해서 애플리케이션을 가속해야할 필요가 있습니다. \n\n웹 사이트를 크롤링하거나 사용자 질의에 응답하는 소프트웨어들은 누군가의 노트북에서 돌아가는 single thread기반의 프로그램이 아니고, 서로 통신하고 상호작용하는 서비스 집합이라고 볼 수 있습니다.\n\n\n(클라우드 컴퓨팅은 메모리, 연산, 스토리지 등 다방면으로 끊임없는 확장성을 제공하고있습니다. 클라우드가 제공하는 이러한 이점에 적절하게 대응하기 위해서는 분산 어플리케이션을 만들 수 있는 새로운 도구가 필요합니다)\n\n\n\n이번 포스팅은 Ray를 사용해서 병렬,분산 어플리케이션을 만드는 방법에 대해서 설명합니다.\nWhy Ray?많은 튜토리얼들이 Python의 multiprocessing 모듈을 어떻게 사용하는지 설명합니다. \n하지만 Python의 multiprocessing 모듈은 한계점을 가지고 있어 현대 애플리케이션이 요구하는 분산, 병렬에 대한 필수사항을 충족하지 못합니다.\n현대 애플리케이션이 요구하는 분산, 병렬처리에 대한 필수사항은 다음과 같습니다.\n\n같은 코드를 한대 이상의 머신(machine)에서 작동시켜야함\nstate를 가지고, 통신이 가능한 actor와 microservice를 만들 수 있어야함\nmachine failures를 깔끔하게 다룰 수 있어야함\n대규모 객체와 수치 데이터를 효율적으로 다룰 수 있어야함\n\nRay는 위에서 언급한 요구사항을 모두 충족합니다. 또한 간단한 작업을 단순하게 만들며, 복잡한 동작을 하게끔 프로그래밍하는 것 또한 가능합니다.\n\n다른 회사들이 자신들의 Python 프로덕션을 확장하기 위해서 Ray를 어떻게 활용하고있는지 배우고싶다면, Ray Summit에 등록하세요!\n\nNecessary Concepts전통적으로 프로그래밍은 1). 함수(Functions), 2) 클래스(Classes)라는 핵심 개념에 의존합니다. 생각해보면 우리는 함수와 클래스만으로 많은 애플리케이션들을 만들어왔습니다.\n하지만, 함수와 클래스로 구성된 애플리케이션을 분산 환경으로 마이그레이션하려고하면 함수, 클래스라는 개념을 사용할 수 없게됩니다. \n따라서 현재까지 알려진 병렬, 분산 도구를 활용해서 싱글 스레드 애플리케이션을 병렬, 분산 애플리케이션으로 마이그레이션을 하기 위해서는 애플리케이션 코드를 처음부터 다시 작성해야합니다.\n현재까지 알려진 병렬, 분산도구는 저수준에서 고수준까지 다양한 도구들이 있습니다.\n먼저 저수준 도구로는 메세지의 송수신을 저수준의 프리미티브로 제공하는 OpenMPI, Python Multiprocessing, ZeroMQ이 있습니다. 이 도구들은 분산, 병렬 환경을 위한 강력한 기능들을 제공합니다. 하지만, 전통적인 프로그래밍과는 다른 추상화 개념을 사용합니다. 이로 인해 위 도구들을 활용해서 기존의 싱글 스레드 애플리케이션을 분산, 병렬 어플리케이션으로 마이그레이션하기 위해서는 코드 전체를 재작성해야합니다.\n또 다른 예로 도메인에 특화되어 고수준의 추상화를 제공하는 도구들이 있습니다. 딥러닝 모델을 학습하기 위한 TensorFlow, 데이터와 SQL 처리를 위한 Spark, 스트림 처리를 위한 Flink가 대표적입니다. 이 도구들은 neural network나 데이터셋, 스트림에 대한 고수준의 추상화 API를 제공합니다. 하지만, 고수준 추상화를 제공하는 도구들 역시 직렬화된 프로그래밍(serial programming)에서 사용하는 추상화와 다르기 때문에, 애플리케이션 코드 전체를 그에 맞게 재작성해줘야하는 단점이 있습니다.\n\n(분산 컴퓨팅을 위한 도구들. 왼쪽은 저수준의 추상화 API를 지원하는 도구, 오른쪽은 고수준의 추상화 API를 제공하는 도구)\n\nRay는 위에서 설명한 도구들과 같은 고수준, 저수준이 아닌 중간수준에 위치합니다. Ray는 함수와 클래스를 task, actor라고 불리는 분산환경에 적합한 형태로 변환하며, 이를 통해 병렬, 분산 컴퓨팅을 지원하는 메커니즘을 가지고 있습니다. 따라서 사용자들은 이전과 다르게 코드를 재작성 없이 기존의 함수와 클래스 구조를 유지하면서 분산, 병렬 프로그래밍을 할 수 있습니다.\nStarting RayRay의 ray.init()명령어는 Ray에서 사용하는 프로세스들을 모두 구동합니다. \n만약 클러스터 환경을 이용해서 분산 컴퓨팅을 하고자 한다면, 클러스터의 주소(address)를 입력하는 코드 라인 하나만 변경하면 됩니다.\nray.init()명령어로 구동되는 Ray의 프로세스들은 아래와 같습니다.\n\nWorker : 파이썬의 함수를 병렬적으로 실행할 프로세스(대략 하나의 worker는 하나의 CPU 코어를 의미합니다).\nScheduler : task들을 worker 혹은 다른 머신에 할당하기 위한 스켸쥴러(task란 Ray에 사용되는 파이썬 함수 혹은 메소드로, Ray에 의해 스켸쥴링되는 단위).\nShared memory object store : 워커(worker)들간 객체를 효율적으로 공유하기 위한 공유메모리(copy 발생이 없는)\nInmemory database : 머신 실패(machine failure)와 같은 이벤트 상황에서 task들을 반환하기 위해 메타 데이터를 저장하는 데이터베이스\n\n\nRay worker는 thread가 아니며, thread와는 다른 개념의 process입니다.\nPython은 GIL(Global Interpreter Lock)으로 인해 multi-threding 지원에 한계가 있습니다.\n\nParallelism with Tasks@ray.remote라는 데코레이터를 함수 위에 선언해주는 것만으로 파이썬 함수를 Ray에서 실행 가능한 remote function으로 변경할 수 있습니다. \n\nremote function은 Ray의 프로세스에 의해 비동기적으로 실행됩니다.\n\n아래 예제와 같이 함수 f를 @ray.remote 데코레이터를 통해서 remote function으로 변경했다면, f.remote()를 호출해서 함수를 실행할 수 있습니다. 이때, 호출된 f.remote()는 즉각적으로 future를 반환하고 실제 함수의 실행은 백그라운드에서 진행됩니다.\n\nfuture는 나중에 반환될 함수의 출력값에 대한 참조입니다.\n\n아래 예제에서  f.remote()에 대한 호출이 즉시 반환되고 다음 remote function이 실행되기 때문에, 백그라운드에서 실행되는 f에 대한 4개의 복사본(task)은 단순히 해당 라인을 4번 실행하는 것으로 분산, 병렬로 실행할 수 있습니다.\n파이썬 함수 f를 “remote function”으로 바꾸기 위해서는 함수에 @ray.remote라는 데코레이터를 선언해줘야합니다. 그리고 함수를 f.remote()로 호출하면 즉시 future를 리턴합니다. 그리고 실제 함수의 실행은 백그라운드에서 실행됩니다.\n12345678910111213141516171819import rayimport time# Start Ray.ray.init()@ray.remotedef f(x):    time.sleep(1)    return x# Start 4 tasks in parallel.result_ids = []for i in range(4):    result_ids.append(f.remote(i))    # Wait for the tasks to complete and retrieve the results.# With at least 4 cores, this will take 1 second.results = ray.get(result_ids)  # [0, 1, 2, 3]\nTask Dependenciestask는 또 다른 task에 의존할 수 있습니다. \n아래 예제에서 multiply_matrices task는 두개의 create_matrix task의 결과를 사용합니다. 따라서 첫번째 두 task의 출력은 자동으로 세번째 task의 인자로 입력됩니다.\n결론적으로, 아래 예제를 실행해보면, multiply_matrices는 첫번째 두 task의 출력의 값이 반환되기 전까지는 실행되지 않습니다. \n이러한 방식으로 task들을 arbitrary DAG dependencies로 구성할 수 있습니다.\n12345678910111213141516import numpy as np@ray.remotedef create_matrix(size):    return np.random.normal(size=size)@ray.remotedef multiply_matrices(x, y):    return np.dot(x, y)x_id = create_matrix.remote([1000, 1000])y_id = create_matrix.remote([1000, 1000])z_id = multiply_matrices.remote(x_id, y_id)# Get the results.z = ray.get(z_id)\nAggregating Values Efficientlytask 의존성을 잘 설계하면 효율적인 방식으로 작업을 수행할 수 있습니다.\n예를 들어 아래의 그림처럼 8개의 정수를 더한다고 생각해봅시다. \n매우 간단한 예제이지만, 실제로 이러한 형태로 큰 벡터를 통합하는 것은 애플리케이션에 큰 병목이 되기도 합니다. 이런 병목 지점에서 task 의존성을 잘 설계한다면, 단 한줄의 코드 변경으로 시간 복잡도를 선형 시간에서 로그메틱 시간으로 변경할 수 있습니다.\n\n(두 연산 그래프는 같은 결과를 반환하지만, 좌측 그림은 의존성 그래프의 깊이가 7이며, 우측 그림은 의존성 그래프의 깊이가 3입니다. 이 경우 우측 연산 그래프의 연산이 더 빠릅니다)\n\n\n\n위에서 설명한데로 하나의 task에서 생성된 output을 다른 task의 입력으로 사용하기 위해서는 첫번째 task로부터 반환받은 future를 두번째 task의 입력으로 넣으면 됩니다. \n이때, 두번째 task가 첫번째 task의 출력을 의존하고있으면 두번째 task는 첫번째 task가 끝나기 전에는 실행되지 않습니다.\ntask 의존성은 자동으로 ray의 스켸쥴러가 추적하고 관리하므로, 만약 분산환경일 경우, 첫번째 task의 출력은 자동으로 두번째 task가 있는 머신으로 보내져 실행되게됩니다.\n12345678910111213141516171819202122232425262728import time@ray.remotedef add(x, y):    time.sleep(1)    return x + y# Aggregate the values slowly. This approach takes O(n) where n is the# number of values being aggregated. In this case, 7 seconds.id1 = add.remote(1, 2)id2 = add.remote(id1, 3)id3 = add.remote(id2, 4)id4 = add.remote(id3, 5)id5 = add.remote(id4, 6)id6 = add.remote(id5, 7)id7 = add.remote(id6, 8)result = ray.get(id7)# Aggregate the values in a tree-structured pattern. This approach# takes O(log(n)). In this case, 3 seconds.id1 = add.remote(1, 2)id2 = add.remote(3, 4)id3 = add.remote(5, 6)id4 = add.remote(7, 8)id5 = add.remote(id1, id2)id6 = add.remote(id3, id4)id7 = add.remote(id5, id6)result = ray.get(id7)\n위의 코드는 명확합니다. 하지만, 이를 while loop를 통해 구현한다면 더 간결하게 구현할 수 있습니다.\n1234567891011# Slow approach.values = [1, 2, 3, 4, 5, 6, 7, 8]while len(values) &gt; 1:    values = [add.remote(values[0], values[1])] + values[2:]result = ray.get(values[0])# Fast approach.values = [1, 2, 3, 4, 5, 6, 7, 8]while len(values) &gt; 1:    values = values[2:] + [add.remote(values[0], values[1])]result = ray.get(values[0])\nFrom Classes to Actors클래스없이 좋은 애플리케이션을 만드는 것은 어려운 일입니다. 그리고 이는 분산환경에서도 마찬가지로 어렵습니다.\n클래스 데코레이터 @ray.remote를 사용하면 Ray에서 파이썬 클래스를 사용할 수 있습니다. 클래스를 인스턴스화하면 Ray는 새로운 액터(Actor)를 생성합니다. 액터는 분산환경 어딘가에서 실행되지만 객체의 복제본(object copy)을 유지하는 프로세스입니다. \n액터의 메소드를 실행하면 Ray는 해당 메소드를 액터 프로세스 위에서 작동하는 task로 변환합니다. 액터 프로세스 위에서 작동하는 task는 액터의 상태(state)에 접근이 가능하고 상태를 변경할 수 있습니다. 이러한 방법으로 액터는 액터의 상태값을 여러 task간 공유합니다.\n개별적인 액터는 메소드를 직렬로 실행하며(블럭킹), 액터의 메소드는 atomic 속성을 갖습니다. 따라서 race condition이 발생하지 않게됩니다. 액터를 이용한 병렬성은 다수의 액터를 생성하는 방식으로 구현합니다.\n아래 예제는 액터를 사용하는 간단한 예제입니다. Counter.remote()는 새로운 액터 프로세스를 생성합니다. \n액터 프로세스는 Counter 객체의 복사본을 갖으며,  c.get_value.remote()와  c.inc.remote()는 원격 액터 프로세스(remote actor process)에서 task를 실행하고 액터의 상태를 변경합니다.\n123456789101112131415161718192021@ray.remoteclass Counter(object):    def __init__(self):        self.x = 0        def inc(self):        self.x += 1        def get_value(self):        return self.x# Create an actor process.c = Counter.remote()# Check the actor&#x27;s counter value.print(ray.get(c.get_value.remote()))  # 0# Increment the counter twice and check the value again.c.inc.remote()c.inc.remote()print(ray.get(c.get_value.remote()))  # 2\nActor Handles위에서 우리는 파이썬의 메인 스크립트에서 액터의 메소드를 실행하는 예제를 살펴봤습니다. \n액터의 강력한 장점은 핸들(handle)을 액터에 전달할 수 있는 것입니다. 이는 다른 액터나 다른 task가 동일한 액터의 메소드를 호출할 수 있게 해줍니다.\n아래 예제는 메세지를 저장하는 액터를 생성합니다. 몇몇의 worker task는 반복적으로 messages를 액터로 푸쉬합니다. 그리고 파이썬 메인 스크립트는 주기적으로 이 메세지를 읽습니다.\n1234567891011121314151617181920212223242526272829303132333435363738394041424344import time@ray.remoteclass MessageActor(object):    def __init__(self):        self.messages = []        def add_message(self, message):        self.messages.append(message)        def get_and_clear_messages(self):        messages = self.messages        self.messages = []        return messages# Define a remote function which loops around and pushes# messages to the actor.@ray.remotedef worker(message_actor, j):    for i in range(100):        time.sleep(1)        message_actor.add_message.remote(            &quot;Message &#123;&#125; from worker &#123;&#125;.&quot;.format(i, j))# Create a message actor.message_actor = MessageActor.remote()# Start 3 tasks that push messages to the actor.[worker.remote(message_actor, j) for j in range(3)]# Periodically get the messages and print them.for _ in range(100):    new_messages = ray.get(message_actor.get_and_clear_messages.remote())    print(&quot;New messages:&quot;, new_messages)    time.sleep(1)# This script prints something like the following:# New messages: []# New messages: [&#x27;Message 0 from worker 1.&#x27;, &#x27;Message 0 from worker 0.&#x27;]# New messages: [&#x27;Message 0 from worker 2.&#x27;, &#x27;Message 1 from worker 1.&#x27;, &#x27;Message 1 from worker 0.&#x27;, &#x27;Message 1 from worker 2.&#x27;]# New messages: [&#x27;Message 2 from worker 1.&#x27;, &#x27;Message 2 from worker 0.&#x27;, &#x27;Message 2 from worker 2.&#x27;]# New messages: [&#x27;Message 3 from worker 2.&#x27;, &#x27;Message 3 from worker 1.&#x27;, &#x27;Message 3 from worker 0.&#x27;]# New messages: [&#x27;Message 4 from worker 2.&#x27;, &#x27;Message 4 from worker 0.&#x27;, &#x27;Message 4 from worker 1.&#x27;]# New messages: [&#x27;Message 5 from worker 2.&#x27;, &#x27;Message 5 from worker 0.&#x27;, &#x27;Message 5 from worker 1.&#x27;]\nRay의 액터는 매우 강력합니다. 액터는 파이썬의 클래스를 가져와서 다른 액터와의 작업 혹은 다른 애플리케이션에 질의할 수 있는 마이크로 서비스로 인스턴스화할 수 있습니다.\ntask와 액터는 Ray가 제공하는 핵심적인 추상입니다. 이 두 가지 개념은 매우 일반적이면서 정교한 애플리케이션 구현에 사용할 수 있습니다.\nRay는 딥러닝에 사용되는 정교한 애플리케이션 중 하나인 분산 강화학습, 하이퍼파라미터 튜닝 도구, 가속화된 판다스를 제공하니 한번 살펴보시기 바랍니다.\nReference\nModern Parallel and Distributed Python: A Quick Tutorial on Ray\n","dateCreated":"2020-08-27T11:31:30+09:00","dateModified":"2021-11-26T21:49:39+09:00","datePublished":"2020-08-27T11:31:30+09:00","description":"이번 포스팅은 Ray에 대해서 소개합니다.","headline":"(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2382&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/","keywords":"Python, Distributed, Parallel, Ray","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="이번 포스팅은 Ray에 대해서 소개합니다.">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray">
+<meta property="og:url" content="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="이번 포스팅은 Ray에 대해서 소개합니다.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2382&q=80">
+<meta property="article:published_time" content="2020-08-27T02:31:30.000Z">
+<meta property="article:modified_time" content="2021-11-26T12:49:39.723Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Distributed">
+<meta property="article:tag" content="Parallel">
+<meta property="article:tag" content="Ray">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2382&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1558494949-ef010cbdcc31"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1558494949-ef010cbdcc31"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-08-27T11:31:30+09:00">
+	
+		    Aug 27, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Software/">Software</a>, <a class="category-link" href="/categories/Software/Disbritubed-Computing/">Disbritubed Computing</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#What-is-Ray"><span class="toc-text">What is Ray?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Why-Ray"><span class="toc-text">Why Ray?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Necessary-Concepts"><span class="toc-text">Necessary Concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Starting-Ray"><span class="toc-text">Starting Ray</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Parallelism-with-Tasks"><span class="toc-text">Parallelism with Tasks</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Task-Dependencies"><span class="toc-text">Task Dependencies</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Aggregating-Values-Efficiently"><span class="toc-text">Aggregating Values Efficiently</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From-Classes-to-Actors"><span class="toc-text">From Classes to Actors</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Actor-Handles"><span class="toc-text">Actor Handles</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+<p><a target="_blank" rel="noopener" href="https://github.com/robertnishihara">Robert Nishihara</a>의 허락을 받아, <a target="_blank" rel="noopener" href="https://towardsdatascience.com/modern-parallel-and-distributed-python-a-quick-tutorial-on-ray-99f8d70369b8">Modern Parallel and Distributed Python: A Quick Tutorial on Ray</a>을 번역한 글입니다.</p>
+<h2 id="What-is-Ray"><a href="#What-is-Ray" class="headerlink" title="What is Ray?"></a>What is <a target="_blank" rel="noopener" href="https://github.com/ray-project/ray">Ray</a>?</h2><p><a target="_blank" rel="noopener" href="https://github.com/ray-project/ray">Ray</a>는 파이썬에서 병렬, 분산 프로그래밍을 위한 오픈소스 프로젝트입니다.</p>
+<p>병렬, 분산 컴퓨팅은 현대 애플리케이션을 구성하는 요소 중 하나로 자리잡았습니다. 우리는 필요에 따라 멀티코어나 여러 대의 머신의 리소스를 최대한 활용해서 애플리케이션을 가속해야할 필요가 있습니다. </p>
+<blockquote>
+<p>웹 사이트를 크롤링하거나 사용자 질의에 응답하는 소프트웨어들은 누군가의 노트북에서 돌아가는 single thread기반의 프로그램이 아니고, 서로 통신하고 상호작용하는 서비스 집합이라고 볼 수 있습니다.</p>
+</blockquote>
+<p><img src="cloud.jpeg" alt="cloud"></p>
+<center>(클라우드 컴퓨팅은 메모리, 연산, 스토리지 등 다방면으로 끊임없는 확장성을 제공하고있습니다. 클라우드가 제공하는 이러한 이점에 적절하게 대응하기 위해서는 분산 어플리케이션을 만들 수 있는 새로운 도구가 필요합니다)</center>
+
+
+
+<p>이번 포스팅은 Ray를 사용해서 병렬,분산 어플리케이션을 만드는 방법에 대해서 설명합니다.</p>
+<h2 id="Why-Ray"><a href="#Why-Ray" class="headerlink" title="Why Ray?"></a>Why Ray?</h2><p>많은 튜토리얼들이 <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/multiprocessing.html#:~:text=multiprocessing is a package that,using subprocesses instead of threads">Python의 multiprocessing 모듈</a>을 어떻게 사용하는지 설명합니다. </p>
+<p>하지만 Python의 multiprocessing 모듈은 한계점을 가지고 있어 현대 애플리케이션이 요구하는 분산, 병렬에 대한 필수사항을 충족하지 못합니다.</p>
+<p>현대 애플리케이션이 요구하는 분산, 병렬처리에 대한 필수사항은 다음과 같습니다.</p>
+<ul>
+<li>같은 코드를 한대 이상의 머신(machine)에서 작동시켜야함</li>
+<li>state를 가지고, 통신이 가능한 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Actor_model">actor</a>와 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Microservices">microservice</a>를 만들 수 있어야함</li>
+<li>machine failures를 깔끔하게 다룰 수 있어야함</li>
+<li>대규모 객체와 수치 데이터를 효율적으로 다룰 수 있어야함</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://github.com/ray-project/ray">Ray</a>는 위에서 언급한 요구사항을 모두 충족합니다. 또한 간단한 작업을 단순하게 만들며, 복잡한 동작을 하게끔 프로그래밍하는 것 또한 가능합니다.</p>
+<p><img src="ray.png" alt="ray"></p>
+<p>다른 회사들이 자신들의 Python 프로덕션을 확장하기 위해서 Ray를 어떻게 활용하고있는지 배우고싶다면, <a target="_blank" rel="noopener" href="https://events.linuxfoundation.org/ray-summit/?utm_source=robert&amp;utm_medium=blog&amp;utm_campaign=ray_summit#featuredspeakers">Ray Summit</a>에 등록하세요!</p>
+<p><img src="ray_summit.png" alt="ray-summit"></p>
+<h2 id="Necessary-Concepts"><a href="#Necessary-Concepts" class="headerlink" title="Necessary Concepts"></a>Necessary Concepts</h2><p>전통적으로 프로그래밍은 <strong>1). 함수(Functions)</strong>, <strong>2) 클래스(Classes)</strong>라는 핵심 개념에 의존합니다. 생각해보면 우리는 함수와 클래스만으로 많은 애플리케이션들을 만들어왔습니다.</p>
+<p>하지만, 함수와 클래스로 구성된 애플리케이션을 분산 환경으로 마이그레이션하려고하면 함수, 클래스라는 개념을 사용할 수 없게됩니다. </p>
+<p>따라서 현재까지 알려진 병렬, 분산 도구를 활용해서 싱글 스레드 애플리케이션을 병렬, 분산 애플리케이션으로 마이그레이션을 하기 위해서는 애플리케이션 코드를 처음부터 다시 작성해야합니다.</p>
+<p>현재까지 알려진 병렬, 분산도구는 저수준에서 고수준까지 다양한 도구들이 있습니다.</p>
+<p>먼저 저수준 도구로는 메세지의 송수신을 저수준의 프리미티브로 제공하는 <a target="_blank" rel="noopener" href="https://www.open-mpi.org/">OpenMPI</a>, <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/multiprocessing.html">Python Multiprocessing</a>, <a target="_blank" rel="noopener" href="https://zeromq.org/">ZeroMQ</a>이 있습니다. 이 도구들은 분산, 병렬 환경을 위한 강력한 기능들을 제공합니다. 하지만, 전통적인 프로그래밍과는 다른 추상화 개념을 사용합니다. 이로 인해 위 도구들을 활용해서 기존의 싱글 스레드 애플리케이션을 분산, 병렬 어플리케이션으로 마이그레이션하기 위해서는 코드 전체를 재작성해야합니다.</p>
+<p>또 다른 예로 도메인에 특화되어 고수준의 추상화를 제공하는 도구들이 있습니다. 딥러닝 모델을 학습하기 위한 <a target="_blank" rel="noopener" href="https://www.tensorflow.org/">TensorFlow</a>, 데이터와 SQL 처리를 위한 <a target="_blank" rel="noopener" href="https://spark.apache.org/">Spark</a>, 스트림 처리를 위한 <a target="_blank" rel="noopener" href="https://flink.apache.org/">Flink</a>가 대표적입니다. 이 도구들은 neural network나 데이터셋, 스트림에 대한 고수준의 추상화 API를 제공합니다. 하지만, 고수준 추상화를 제공하는 도구들 역시 <strong>직렬화된 프로그래밍(serial programming)</strong>에서 사용하는 추상화와 다르기 때문에, 애플리케이션 코드 전체를 그에 맞게 재작성해줘야하는 단점이 있습니다.</p>
+<p><img src="distributed_computing_tools.jpeg" alt="ray-summit"></p>
+<center>(분산 컴퓨팅을 위한 도구들. 왼쪽은 저수준의 추상화 API를 지원하는 도구, 오른쪽은 고수준의 추상화 API를 제공하는 도구)</center>
+
+<p>Ray는 위에서 설명한 도구들과 같은 고수준, 저수준이 아닌 중간수준에 위치합니다. Ray는 함수와 클래스를 task, actor라고 불리는 분산환경에 적합한 형태로 변환하며, 이를 통해 병렬, 분산 컴퓨팅을 지원하는 메커니즘을 가지고 있습니다. 따라서 사용자들은 이전과 다르게 코드를 재작성 없이 기존의 함수와 클래스 구조를 유지하면서 분산, 병렬 프로그래밍을 할 수 있습니다.</p>
+<h2 id="Starting-Ray"><a href="#Starting-Ray" class="headerlink" title="Starting Ray"></a>Starting Ray</h2><p>Ray의 <code>ray.init()</code>명령어는 Ray에서 사용하는 프로세스들을 모두 구동합니다. </p>
+<p>만약 클러스터 환경을 이용해서 분산 컴퓨팅을 하고자 한다면, 클러스터의 주소(address)를 입력하는 코드 라인 하나만 변경하면 됩니다.</p>
+<p><code>ray.init()</code>명령어로 구동되는 Ray의 프로세스들은 아래와 같습니다.</p>
+<ul>
+<li><strong>Worker</strong> : 파이썬의 함수를 병렬적으로 실행할 프로세스(대략 하나의 worker는 하나의 CPU 코어를 의미합니다).</li>
+<li><strong>Scheduler</strong> : task들을 worker 혹은 다른 머신에 할당하기 위한 스켸쥴러(task란 Ray에 사용되는 파이썬 함수 혹은 메소드로, Ray에 의해 스켸쥴링되는 단위).</li>
+<li><strong>Shared memory object store</strong> : 워커(worker)들간 객체를 효율적으로 공유하기 위한 공유메모리(copy 발생이 없는)</li>
+<li><strong>Inmemory database</strong> : 머신 실패(machine failure)와 같은 이벤트 상황에서 task들을 반환하기 위해 메타 데이터를 저장하는 데이터베이스</li>
+</ul>
+<blockquote>
+<p>Ray worker는 thread가 아니며, thread와는 다른 개념의 process입니다.</p>
+<p>Python은 GIL(Global Interpreter Lock)으로 인해 multi-threding 지원에 한계가 있습니다.</p>
+</blockquote>
+<h2 id="Parallelism-with-Tasks"><a href="#Parallelism-with-Tasks" class="headerlink" title="Parallelism with Tasks"></a>Parallelism with Tasks</h2><p><code>@ray.remote</code>라는 데코레이터를 함수 위에 선언해주는 것만으로 파이썬 함수를 Ray에서 실행 가능한 <em>remote function</em>으로 변경할 수 있습니다. </p>
+<blockquote>
+<p><em>remote function</em>은 Ray의 프로세스에 의해 비동기적으로 실행됩니다.</p>
+</blockquote>
+<p>아래 예제와 같이 함수 <code>f</code>를 <code>@ray.remote</code> 데코레이터를 통해서 <em>remote function</em>으로 변경했다면, <code>f.remote()</code>를 호출해서 함수를 실행할 수 있습니다. 이때, 호출된 <code>f.remote()</code>는 즉각적으로 future를 반환하고 실제 함수의 실행은 백그라운드에서 진행됩니다.</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Futures_and_promises">future</a>는 나중에 반환될 함수의 출력값에 대한 참조입니다.</p>
+</blockquote>
+<p>아래 예제에서  <code>f.remote()</code>에 대한 호출이 즉시 반환되고 다음 <em>remote function</em>이 실행되기 때문에, 백그라운드에서 실행되는 <code>f</code>에 대한 4개의 복사본(task)은 단순히 해당 라인을 4번 실행하는 것으로 분산, 병렬로 실행할 수 있습니다.</p>
+<p>파이썬 함수 <code>f</code>를 “remote function”으로 바꾸기 위해서는 함수에 <code>@ray.remote</code>라는 데코레이터를 선언해줘야합니다. 그리고 함수를 <code>f.remote()</code>로 호출하면 즉시 future를 리턴합니다. 그리고 실제 함수의 실행은 백그라운드에서 실행됩니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> ray</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="comment"># Start Ray.</span></span><br><span class="line">ray.init()</span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">f</span>(<span class="params">x</span>):</span></span><br><span class="line">    time.sleep(<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line"><span class="comment"># Start 4 tasks in parallel.</span></span><br><span class="line">result_ids = []</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>):</span><br><span class="line">    result_ids.append(f.remote(i))</span><br><span class="line">    </span><br><span class="line"><span class="comment"># Wait for the tasks to complete and retrieve the results.</span></span><br><span class="line"><span class="comment"># With at least 4 cores, this will take 1 second.</span></span><br><span class="line">results = ray.get(result_ids)  <span class="comment"># [0, 1, 2, 3]</span></span><br></pre></td></tr></table></figure>
+<h3 id="Task-Dependencies"><a href="#Task-Dependencies" class="headerlink" title="Task Dependencies"></a>Task Dependencies</h3><p>task는 또 다른 task에 의존할 수 있습니다. </p>
+<p>아래 예제에서 <code>multiply_matrices</code> task는 두개의 <code>create_matrix</code> task의 결과를 사용합니다. 따라서 첫번째 두 task의 출력은 자동으로 세번째 task의 인자로 입력됩니다.</p>
+<p>결론적으로, 아래 예제를 실행해보면, <code>multiply_matrices</code>는 첫번째 두 task의 출력의 값이 반환되기 전까지는 실행되지 않습니다. </p>
+<p>이러한 방식으로 task들을 arbitrary DAG dependencies로 구성할 수 있습니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">create_matrix</span>(<span class="params">size</span>):</span></span><br><span class="line">    <span class="keyword">return</span> np.random.normal(size=size)</span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">multiply_matrices</span>(<span class="params">x, y</span>):</span></span><br><span class="line">    <span class="keyword">return</span> np.dot(x, y)</span><br><span class="line"></span><br><span class="line">x_id = create_matrix.remote([<span class="number">1000</span>, <span class="number">1000</span>])</span><br><span class="line">y_id = create_matrix.remote([<span class="number">1000</span>, <span class="number">1000</span>])</span><br><span class="line">z_id = multiply_matrices.remote(x_id, y_id)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Get the results.</span></span><br><span class="line">z = ray.get(z_id)</span><br></pre></td></tr></table></figure>
+<h3 id="Aggregating-Values-Efficiently"><a href="#Aggregating-Values-Efficiently" class="headerlink" title="Aggregating Values Efficiently"></a>Aggregating Values Efficiently</h3><p>task 의존성을 잘 설계하면 효율적인 방식으로 작업을 수행할 수 있습니다.</p>
+<p>예를 들어 아래의 그림처럼 8개의 정수를 더한다고 생각해봅시다. </p>
+<p>매우 간단한 예제이지만, 실제로 이러한 형태로 큰 벡터를 통합하는 것은 애플리케이션에 큰 병목이 되기도 합니다. 이런 병목 지점에서 task 의존성을 잘 설계한다면, 단 한줄의 코드 변경으로 시간 복잡도를 선형 시간에서 로그메틱 시간으로 변경할 수 있습니다.</p>
+<p><img src="aggregation.jpeg" alt="aggregation.jpeg"></p>
+<center>(두 연산 그래프는 같은 결과를 반환하지만, 좌측 그림은 의존성 그래프의 깊이가 7이며, 우측 그림은 의존성 그래프의 깊이가 3입니다. 이 경우 우측 연산 그래프의 연산이 더 빠릅니다)</center>
+
+
+
+<p>위에서 설명한데로 하나의 task에서 생성된 output을 다른 task의 입력으로 사용하기 위해서는 첫번째 task로부터 반환받은 future를 두번째 task의 입력으로 넣으면 됩니다. </p>
+<p>이때, 두번째 task가 첫번째 task의 출력을 의존하고있으면 두번째 task는 첫번째 task가 끝나기 전에는 실행되지 않습니다.</p>
+<p>task 의존성은 자동으로 ray의 스켸쥴러가 추적하고 관리하므로, 만약 분산환경일 경우, 첫번째 task의 출력은 자동으로 두번째 task가 있는 머신으로 보내져 실행되게됩니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add</span>(<span class="params">x, y</span>):</span></span><br><span class="line">    time.sleep(<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> x + y</span><br><span class="line"></span><br><span class="line"><span class="comment"># Aggregate the values slowly. This approach takes O(n) where n is the</span></span><br><span class="line"><span class="comment"># number of values being aggregated. In this case, 7 seconds.</span></span><br><span class="line">id1 = add.remote(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line">id2 = add.remote(id1, <span class="number">3</span>)</span><br><span class="line">id3 = add.remote(id2, <span class="number">4</span>)</span><br><span class="line">id4 = add.remote(id3, <span class="number">5</span>)</span><br><span class="line">id5 = add.remote(id4, <span class="number">6</span>)</span><br><span class="line">id6 = add.remote(id5, <span class="number">7</span>)</span><br><span class="line">id7 = add.remote(id6, <span class="number">8</span>)</span><br><span class="line">result = ray.get(id7)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Aggregate the values in a tree-structured pattern. This approach</span></span><br><span class="line"><span class="comment"># takes O(log(n)). In this case, 3 seconds.</span></span><br><span class="line">id1 = add.remote(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line">id2 = add.remote(<span class="number">3</span>, <span class="number">4</span>)</span><br><span class="line">id3 = add.remote(<span class="number">5</span>, <span class="number">6</span>)</span><br><span class="line">id4 = add.remote(<span class="number">7</span>, <span class="number">8</span>)</span><br><span class="line">id5 = add.remote(id1, id2)</span><br><span class="line">id6 = add.remote(id3, id4)</span><br><span class="line">id7 = add.remote(id5, id6)</span><br><span class="line">result = ray.get(id7)</span><br></pre></td></tr></table></figure>
+<p>위의 코드는 명확합니다. 하지만, 이를 <code>while</code> loop를 통해 구현한다면 더 간결하게 구현할 수 있습니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Slow approach.</span></span><br><span class="line">values = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>]</span><br><span class="line"><span class="keyword">while</span> <span class="built_in">len</span>(values) &gt; <span class="number">1</span>:</span><br><span class="line">    values = [add.remote(values[<span class="number">0</span>], values[<span class="number">1</span>])] + values[<span class="number">2</span>:]</span><br><span class="line">result = ray.get(values[<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># Fast approach.</span></span><br><span class="line">values = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>]</span><br><span class="line"><span class="keyword">while</span> <span class="built_in">len</span>(values) &gt; <span class="number">1</span>:</span><br><span class="line">    values = values[<span class="number">2</span>:] + [add.remote(values[<span class="number">0</span>], values[<span class="number">1</span>])]</span><br><span class="line">result = ray.get(values[<span class="number">0</span>])</span><br></pre></td></tr></table></figure>
+<h2 id="From-Classes-to-Actors"><a href="#From-Classes-to-Actors" class="headerlink" title="From Classes to Actors"></a>From Classes to Actors</h2><p>클래스없이 좋은 애플리케이션을 만드는 것은 어려운 일입니다. 그리고 이는 분산환경에서도 마찬가지로 어렵습니다.</p>
+<p>클래스 데코레이터 <code>@ray.remote</code>를 사용하면 Ray에서 파이썬 클래스를 사용할 수 있습니다. 클래스를 인스턴스화하면 Ray는 새로운 액터(Actor)를 생성합니다. 액터는 분산환경 어딘가에서 실행되지만 객체의 복제본(object copy)을 유지하는 프로세스입니다. </p>
+<p>액터의 메소드를 실행하면 Ray는 해당 메소드를 액터 프로세스 위에서 작동하는 task로 변환합니다. 액터 프로세스 위에서 작동하는 task는 액터의 상태(state)에 접근이 가능하고 상태를 변경할 수 있습니다. 이러한 방법으로 액터는 액터의 상태값을 여러 task간 공유합니다.</p>
+<p>개별적인 액터는 메소드를 직렬로 실행하며(블럭킹), 액터의 메소드는 atomic 속성을 갖습니다. 따라서 race condition이 발생하지 않게됩니다. 액터를 이용한 병렬성은 다수의 액터를 생성하는 방식으로 구현합니다.</p>
+<p>아래 예제는 액터를 사용하는 간단한 예제입니다. <code>Counter.remote()</code>는 새로운 액터 프로세스를 생성합니다. </p>
+<p>액터 프로세스는 <code>Counter</code> 객체의 복사본을 갖으며,  <code>c.get_value.remote()</code>와  <code>c.inc.remote()</code>는 원격 액터 프로세스(remote actor process)에서 task를 실행하고 액터의 상태를 변경합니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Counter</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.x = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">inc</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.x += <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_value</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> self.x</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create an actor process.</span></span><br><span class="line">c = Counter.remote()</span><br><span class="line"></span><br><span class="line"><span class="comment"># Check the actor&#x27;s counter value.</span></span><br><span class="line"><span class="built_in">print</span>(ray.get(c.get_value.remote()))  <span class="comment"># 0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Increment the counter twice and check the value again.</span></span><br><span class="line">c.inc.remote()</span><br><span class="line">c.inc.remote()</span><br><span class="line"><span class="built_in">print</span>(ray.get(c.get_value.remote()))  <span class="comment"># 2</span></span><br></pre></td></tr></table></figure>
+<h3 id="Actor-Handles"><a href="#Actor-Handles" class="headerlink" title="Actor Handles"></a>Actor Handles</h3><p>위에서 우리는 파이썬의 메인 스크립트에서 액터의 메소드를 실행하는 예제를 살펴봤습니다. </p>
+<p>액터의 강력한 장점은 핸들(handle)을 액터에 전달할 수 있는 것입니다. 이는 다른 액터나 다른 task가 동일한 액터의 메소드를 호출할 수 있게 해줍니다.</p>
+<p>아래 예제는 메세지를 저장하는 액터를 생성합니다. 몇몇의 worker task는 반복적으로 messages를 액터로 푸쉬합니다. 그리고 파이썬 메인 스크립트는 주기적으로 이 메세지를 읽습니다.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MessageActor</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.messages = []</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">add_message</span>(<span class="params">self, message</span>):</span></span><br><span class="line">        self.messages.append(message)</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_and_clear_messages</span>(<span class="params">self</span>):</span></span><br><span class="line">        messages = self.messages</span><br><span class="line">        self.messages = []</span><br><span class="line">        <span class="keyword">return</span> messages</span><br><span class="line"></span><br><span class="line"><span class="comment"># Define a remote function which loops around and pushes</span></span><br><span class="line"><span class="comment"># messages to the actor.</span></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">worker</span>(<span class="params">message_actor, j</span>):</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">100</span>):</span><br><span class="line">        time.sleep(<span class="number">1</span>)</span><br><span class="line">        message_actor.add_message.remote(</span><br><span class="line">            <span class="string">&quot;Message &#123;&#125; from worker &#123;&#125;.&quot;</span>.<span class="built_in">format</span>(i, j))</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create a message actor.</span></span><br><span class="line">message_actor = MessageActor.remote()</span><br><span class="line"></span><br><span class="line"><span class="comment"># Start 3 tasks that push messages to the actor.</span></span><br><span class="line">[worker.remote(message_actor, j) <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">3</span>)]</span><br><span class="line"></span><br><span class="line"><span class="comment"># Periodically get the messages and print them.</span></span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">100</span>):</span><br><span class="line">    new_messages = ray.get(message_actor.get_and_clear_messages.remote())</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;New messages:&quot;</span>, new_messages)</span><br><span class="line">    time.sleep(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># This script prints something like the following:</span></span><br><span class="line"><span class="comment"># New messages: []</span></span><br><span class="line"><span class="comment"># New messages: [&#x27;Message 0 from worker 1.&#x27;, &#x27;Message 0 from worker 0.&#x27;]</span></span><br><span class="line"><span class="comment"># New messages: [&#x27;Message 0 from worker 2.&#x27;, &#x27;Message 1 from worker 1.&#x27;, &#x27;Message 1 from worker 0.&#x27;, &#x27;Message 1 from worker 2.&#x27;]</span></span><br><span class="line"><span class="comment"># New messages: [&#x27;Message 2 from worker 1.&#x27;, &#x27;Message 2 from worker 0.&#x27;, &#x27;Message 2 from worker 2.&#x27;]</span></span><br><span class="line"><span class="comment"># New messages: [&#x27;Message 3 from worker 2.&#x27;, &#x27;Message 3 from worker 1.&#x27;, &#x27;Message 3 from worker 0.&#x27;]</span></span><br><span class="line"><span class="comment"># New messages: [&#x27;Message 4 from worker 2.&#x27;, &#x27;Message 4 from worker 0.&#x27;, &#x27;Message 4 from worker 1.&#x27;]</span></span><br><span class="line"><span class="comment"># New messages: [&#x27;Message 5 from worker 2.&#x27;, &#x27;Message 5 from worker 0.&#x27;, &#x27;Message 5 from worker 1.&#x27;]</span></span><br></pre></td></tr></table></figure>
+<p>Ray의 액터는 매우 강력합니다. 액터는 파이썬의 클래스를 가져와서 다른 액터와의 작업 혹은 다른 애플리케이션에 질의할 수 있는 마이크로 서비스로 인스턴스화할 수 있습니다.</p>
+<p>task와 액터는 Ray가 제공하는 핵심적인 추상입니다. 이 두 가지 개념은 매우 일반적이면서 정교한 애플리케이션 구현에 사용할 수 있습니다.</p>
+<p>Ray는 딥러닝에 사용되는 정교한 애플리케이션 중 하나인 <a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/rllib.html">분산 강화학습</a>, <a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/tune/index.html">하이퍼파라미터 튜닝 도구</a>, <a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/pandas_on_ray.html">가속화된 판다스</a>를 제공하니 한번 살펴보시기 바랍니다.</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://towardsdatascience.com/modern-parallel-and-distributed-python-a-quick-tutorial-on-ray-99f8d70369b8">Modern Parallel and Distributed Python: A Quick Tutorial on Ray</a></li>
+</ol>
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-ckwjb6wnm00077tocatm77d84"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Distributed/" rel="tag">Distributed</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Parallel/" rel="tag">Parallel</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Ray/" rel="tag">Ray</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    data-tooltip="(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                    aria-label="PREVIOUS: (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/01/05/20200105-2019_retrospective/"
+                    data-tooltip="2019년 회고"
+                    aria-label="NEXT: 2019년 회고"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2022 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    data-tooltip="(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                    aria-label="PREVIOUS: (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/01/05/20200105-2019_retrospective/"
+                    data-tooltip="2019년 회고"
+                    aria-label="NEXT: 2019년 회고"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                16 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

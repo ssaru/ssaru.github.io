@@ -1,0 +1,1252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>How the Eye of A.I Sees - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,CNN,AI,Neural Network,Deep learning,shape bias,texture bias">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n이번 포스팅은 논문 ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness을 읽고 읽은 내용을 포스팅한다.\n무엇이 맞는 말일까??컨볼루션 뉴럴 네트워크(Convolutional Neural Network)가 무엇에 편향되는지 바라보는 두 가지 관점형상 정보 가설과 질감 정보 가설(Shape Hypothesis vs Texture Hypothesis)\n형상정보 가설(Shape Hypothesis)많은 사람들은 컨볼루션 뉴럴 네트워크(Convolutional Neural Network; 이하 CNN)가 “레이어가 깊어질 수록 저-레벨(low level)의 특징(feature)을 조합해서 고-레벨(high level) 특징(feature)을 만들고, 이 특징들을 이용하여 객체인식을 한다.” 이라는 직관에 동의할 것이다.\n\n\n[그림 1] ZF-Net으로 시각화한 layer들의 특징\nCNN이 객체 분류를 어떻게 하는지에 대한 공통된 해석은 여러 문헌에서도 나타나는데 Kriegeskorte과 LeCun은 그들이 저술한 논문 혹은 아티클에서 아래와 같이 언급했다.\n\nCNN은 각 카테고리(강아지, 고양이)가 가지고있는 고유한 패턴과 같은 지식을 얻는다.  … (중략) … 고-레벨(high level)의 특징들은 실제 영상(생성되거나 조작되지 않은 영상)에서 나타나는 형상(shape; 이하 형상) 정보를 배우는 것 처럼 보인다.\nCNN의 중간 레이어들은 같은 카테고리의 객체들에게서 유사한 부분을 인식한다. …(중략) … 객체를 검출하는 것은 이러한 부분들의 조합이다.\n\n이렇게 CNN이 형상 정보를 학습한다는 주장을 형상 정보 가설 (Shape Hypothesis)부른다.\n형상 가설은 수많은 실험을 통해서 지지를 받는데, 대표적으로 ZF-Net이 있다. ZF-Net은 모델의 레이어로부터 특징들을 추출한다. 그 후 역-컨볼루션(De-Convolution)이라는 연산을 통해서 추출한 특징을 시각화한다. [그림 1]은 ZF-Net에서 추출한 특징을 시각적으로 보여준다.\nKubilius라는 연구자는 CNN을 사람의 시각 인지 모델로써 제안했으며 Ritter는 CNN이 아이들과 유사하게 형상 정보를 개발해나간다는 것을 밝혀냈다. Ritter가 이야기하는 형상 정보를 개발한다는 것의 의미는 색감(Colour) 정보 보다는 형상 정보가 객체 분류를 하는데 더 중요한 역할을 한다는 것을 의미한다. \n실제로 형상 정보 가설은 사람의 인지 체계와 매우 비슷하기도 하다. 사람은 모양이 바뀌면 다른 카테고리로 분류하지만 질감 및 크기가 변화하더라도 같은 모양이면 같은 객체 카테고리로 인식한다. 이는 해당 연구 결과를 통해서 확인되었다.\n\n[그림 2] 사람은 질감과는 관계없이 모양에 따라 같은/다른 물체로 인식한다.\nSummary\n\n형상정보 가설(Shape Hypothesis)는 CNN이 객체의 거시적인 형상을 보고 인식을 한다는 가설이다.\n가설을 지지하는 실험들이 여러 논문들을 통해서 확인되었다.\n  ZF-Net, A Shape Bias Case Study, \n\n이러한 형상정보 가설은 사람의 인지체계와도 제일 유사한 측면을 갖는다.\n\n\n질감 정보 가설(Texture Hypothesis)몇몇 연구 결과들은 형상 정보 가설과 상반되는 결과를 얻기도 했다. 대표적으로 연결이 부분적으로 끊어진 네트워크에서 학습된 모델은 질감 정보(Texture; 이하 질감)가 더 중요한 역할을 한다는 연구가 있다. 해당 연구에서는 CNN이 전반적인 형상 정보가 없어도 질감 정보를 이용해서 영상을 잘 분류할 수 있다는 것을 증명한다. 오히려 질감 정보가 없는 형상 정보(스케치 그림)만으로 학습한 CNN은 나쁜 인식 성능을 갖는다.\n\n[그림 3] CNN의 질감 정보만을 이용한 분류 예시\n\n\n[그림 4] 질감 정보가 없는 스케치 데이터로만 학습했을 때, 새(bird) 데이터를 얼마나 많이, 자주 틀리는지에 대한 예시\n두 가지 결과는 질감 정보와 같은 지역적인 정보(Local feature)만을 이용해서 객체 인식 문제를 충분히 해결할 수 있다는 것을 시사한다. 이를 증명한 연구결과는 여기에서 확인할 수 있다. \n질감 정보의 중요성을 이야기하는 또 다른 연구에서는 질감 정보를 학습하고 특정 질감 정보를 생성하는 네트워크를 만들었다. 이렇게 질감 정보를 종류별로 학습하고 생성한다는 것은 모델이 세 가지의 기능을 수행한다는 의미를 갖는다.\n\n종류별 질감 정보를 분류한다.\n종류별 질감 정보의 분포를 학습한다.\n특정 질감 정보의 분포를 생성 한다.\n\n해당 네트워크는 분류(Classification)를 하는 네트워크가 아니다. 하지만 질감 정보를 종류별로 생성한다는 것은 “질감 정보의 분포가 서로 다르기 때문에 질감 별로 분리해서 학습할 수 있다”는 것을 내포한다. 이런 맥락에서 논문의 저자는 질감 정보만으로 객체 분류 문제를 풀 수 있다고 이야기하는 듯 하다.\n\n[그림 5] 질감정보를 생성하는 네트워크\n그 외에도 다른 연구에서는 최대 리셉티브 필드의 크기에 제한을 둔 BagNet을 설계했다. BagNet은 최대 리셉티브 필드 크기의 제한으로 CNN이 국부적인 정보만 볼수 있게끔 시야가 제한이 되었다. 그럼에도 불구하고 ImageNet 데이터에서 놀라울 정도로 높은 정확도를 갖는 결과를 얻었다. 이러한 결과들을 보았을 때 국부적인 질감 정보는 객체 분류를 하는데 충분한 정보를 가지고 있음을 알 수 있다. CNN은 이런 질감 정보을 추론하는데 이를 질감 정보 가설(Texture Hypothesis)라고 부른다.\n\n[그림 6] 최대 리셉티브 필드의 크기가 제한된 Bag Net의 최종 Layer에서 확인된 Feature들\nSummary\n\n질감정보 가설(Texture Hypothesis)는 CNN이 객체의 국부적인 질감정보를 보고 인식을 한다는 가설이다.\n가설을 지지하는 실험들이 여러 논문을 통해서 확인되었다.\n\n\n지금까지 형상 정보 가설(Shape Hypothesis)와 질감 정보 가설(Texture Hypothesis)를 살펴보았다. 이렇게 상반되는 두 가지 가설을 해결하는 것은 인공지능 커뮤니티와 뇌 과학자 커뮤니티 모두에게 중요하다. \n해당 논문에서는 StyleGAN을 이용하여 질감-형상 정보가 모순된 이미지(Cue Conflict)를 만들었다. 이를 이용하면 CNN과 사람의 시각 능력에 대해서 정량적으로 측정할 수 있게 된다. 이렇게 만든 질감-형상 정보가 모순된  이미지(Cue Conflict)를 이용해서 총 97명의 실험 참가자와 함께 9종류의 정신 물리학 실험(Psychophysical Experiments) 을 진행하였다. 총 실험의 횟수는 48,560번이었다.\n본 논문의 기여는 아래와 같다.\n\nCNN과 사람의 인지 차이를 확인함\nCNN의 편향의 변경할 수 있음을 확인함\n편향의 변경으로 생기는 효과를 확인함\n\n실험CNN과 사람의 시각 시스템의 차이를 확실하게 확인하기 위해서 해당 논문에서는 여러가지 실험을 진행했다.\n\nCNN과 사람의 시각 시스템은 서로 어떻게 다를까?(Psychophysical Experiments)\n데이터셋\n모순된 영상을 보여준다면? (Cue Conflict)\n실험 결과\nCNN이 사람과 비슷하게 보게 하려면? 비슷하게 보게 된다면?\n\nCNN과 사람의 시각 시스템은 서로 어떻게 다를까? (Psychophysical Experiments)CNN과 사람이 어떻게 물체를 인식하느냐(질감 정보를 기반으로 인식하느냐? vs 형상 정보를 기반으로 인식하느냐?)를 확인하기 위해서 정신 물리학(Psychophysical Experiments; 이하 정신 물리학) 실험을 진행하였다.\n실험 내용은 16-Class-ImageNet이라는 데이터 셋을 사람과 CNN에게 똑같이 보여주고 이미지 분류 작업 결과를 확인하였다. 실험 참가자는 총 97명이었으며 16-Class-ImageNet의 데이터수는 49K(49,000)였다.\n사람과 CNN이 본질적으로 큰 차이가 있기 때문에 실험은 굉장히 신중하게 설계 되었어야 했다. CNN은 단일의 영상 정보를 한번만 네트워크에 입력하지만 사람의 시각 시스템은 연속된 정보(동영상)을 획득하고 뇌에서는 이를 기반으로 각 신경끼리 피드백을 주고받는다. 따라서 단순하게 영상을 보여주고 분류하는 실험은 CNN과 사람에게 단 한장의 영상만 보고 분류를 한다라는 실험 조건에서 단 한장이 서로 다를 수 있다.\n실험을 최대한 공평하게 진행하기 위해서는 사람과 CNN의 실험 조건을 같게 설정 해야했다. 사람의 시각 시스템에서 발생하는 피드백은 영상을 제공하는 순서와 타이밍을 조절하여 최소화하였다. 이러한 방법은 이미 정신 물리학적 실험에서는 잘 알려진 사실이라고 논문에서는 언급한다. 하지만 의학적인 참고자료가 제시되어있지 않아서 더 자세한 근거는 확인하지 못했다.\n\n200ms 동안 분류작업을 할 영상을 보여준다.\n300ms 동안 고정된 사각형 이미지를 보여준다.\n1/f 스펙트럼을 가진 노이즈 마스크를 200ms동안 보여준다.\n\n\n[그림 7] CNN과 사람의 시각 시스템의 비교\n데이터 셋해당 연구의 실험에서는 사람과 CNN이 서로 어떤 가설을 기반으로 인지를 하는지 확인하는 것이 목적이므로 16-Class ImageNet 데이터를 왜곡하여서 진행하였다. \n\nOriginal\nGreyScale\nSilhouette\nEdges\nTexture\nCue Conflict (모순된 영상)\n\n\n[그림 8] 16-Class ImageNet 예시\n모순된 영상(Cue Conflict)기본적인 이미지 왜곡 외에도 서로 다른 형상 정보와 질감 정보가 섞여 있어 모순을 일으키는 Cue Conflict 영상으로도 실험을 진행하였다.\n\n[그림 9] Silhouettes를 이용한 Cue Conflict 영상(위에서 3번째)과 Style transfer를 이용한 Cue Conflict 영상(위에서 네 번째)\nCue Conflict 영상을 만들기 위해서 두 가지 방법을 적용하였다.\n\n세그멘테이션 맵을 이용해 다른 영상 정보를 혼합하는 방법(filled silhouettes)\nStyle GAN을 이용하여 영상 정보를 혼합하는 방법(style transfer)\n\n연구자들이 막상 이러한 영상을 만들고 나니까 문득 든 생각이 해당 영상들이 실제 형상 정보와 질감 정보가 완전히 모순 되어 있다는 것을 어떻게 증명할 수 있을까? 였다. 이를 증명하기 위해서 연구자들은 앞서 언급했던 Bag Net를 사용하였다.\nBag Net는 최대 리셉티브 필드의 크기를 제한하여 CNN이 이미지의 전체 형상을 보지 못하게 만든 모델이다. 국부적인 특징(local feature)들만 이용했음에도 불구하고 BagNet은 굉장히 좋은 성능을 나타내었는데 만약 국부적인 특징(Texture)이 전체적인 특징(Shape)과 모순되어있다면(Cue conflict) Bag Net의 성능이 급격히 하락할 것이다.\n실제로 Bag Net을 이용하여 Cue conflict 영상을 추론해본 결과 기존 ImageNet 데이터에서 성능이 잘 나오던 모델이 약 85% 정도의 성능 하락 발생한 것을 할 수 있었다.(ImageNet, 70.0% top-5 accuracy → Cue conflict, 10.0% top-5 accuracy)\n이를 토대로 생성된 Cue conflict 영상이 형상 정보와 질감 정보가 모순되어 있다는 것을 확인할 수 있었다.\n실험 결과실험 결과 사람과 CNN이 물체를 분류하는 작업에서 큰 차이를 볼 수 있었다. 사람은 굉장히 형상 정보에 편향되어 있고, CNN은 질감 정보에 편향되어 있음을 확인할 수 있었다.\n이는 고양이 형상에 코끼리 가죽 질감 정보가 섞여있는 Cue conflict 영상을 사람과 CNN에게 보여주었을 때, CNN은 이를 “코끼리”로 사람은 이를 “고양이”로 인식한다는 이야기가 된다.\n\n[그림 10] CNN과 사람의 시각 시스템의 차이. 왼쪽은 형상 정보 편향을 의미하고 오른쪽으로 질감 정보 편향을 의미한다. 해당 그림에서 사람은 형상 정보에 편향 되어있음을 CNN은 질감 정보에 편향 되어있음을 확인할 수 있다.\nCNN이 사람과 비슷하게 보게 하려면? 비슷하게 보게 된다면?연구자들은 이제 CNN이 사람과 비슷하게 형상 정보에 편향되면 어떻게 될까?가 궁금해졌다. 그래서 기존의 IN(ImageNet) 데이터와 SIN(Sytle transfered ImageNet)데이터를 이용하여 학습을 진행하였다.\n학습 방법에 대해서는 다양한 실험을 진행했다\n\nIN 학습 → IN으로 평가\nIN 학습 → SIN으로 평가\nSIN 학습 → IN으로 평가\nSIN 학습 → SIN으로 평가\nIN과 SIN을 혼합해서 학습 → IN으로 평가\nIN과 SIN을 혼합하여 학습 후 IN으로 파인튠 → IN으로 평가\n\n학습 후에는 모델이 효과적으로 형상 정보 편향이 되었는지 확인하기 위해 16-Class-ImageNet 데이터를 이용하여 이를 확인하였다. 전부는 아니지만 많은 클래스에 대해서 CNN이 질감 정보 편향에서 형상 정보 편향으로 이동 하였음을 확인할 수 있었다.\n\n[그림 11] IN/SIN 데이터를 학습한 모델과 사람의 차이. 데이터를 혼합해서 학습한 모델이 그림 10. 과 비교했을 때 상대적으로 형상 정보 편향으로 이동되었음을 확인할 수 있다.\n결론적으로 해당 실험에서 SIN 데이터(형상 정보 편향)만으로는 성능을 더 개선시킬 수는 없었다. 하지만 IN 데이터와 SIN데이터를 혼합해서 학습하는 경우에는 ImageNet 데이터 셋만 이용해서 학습한 것보다는 성능이 더 좋아진다는 것을 확인하였다. 또한 형상 정보 편향이 된 CNN을 이용해 객체 검출(Object Detection) 모델에 전이 학습(Transfer learning)했을 때, 기존의 객체 검출 모델보다 성능이 더 개선 되었음을 확인할 수 있었다. 이는 SIN데이터를 혼합해서 학습하는 것이 모델의 일반화(Generalization)에 더 기여한다고 해석할 수 있다.\n\n[그림 12] IN데이터와 SIN 데이터를 이용한 CNN 학습 결과\n그 외에 노이즈를 이용한 영상 왜곡 실험을 추가로 진행했다. 이 경우에도 형상 정보에 편향된 CNN이 노이즈 왜곡에도 모델이 더 강인해짐을 확인할 수 있었다.\n\n[그림 13] 추가 영상 왜곡 실험에서 사용한 노이즈 예시\n\n[그림 14] 형상 정보, 질감 정보에 편향된 CNN이 노이즈 왜곡에 따라 나타내는 성능\n요약\n기존의 CNN이 이미지 분류를 할 때, 형상 정보를 기반으로 인식을 한다는 형상 정보 가설(Shape Bias Hypothesis)와 질감 정보를 기반으로 인식한다는 질감 정보 가설(Texture Bias Hypothesis)가 존재했다.\n\n사람과 CNN이 영상 데이터를 어떤 관점에서 분류하는지 확인하기 위해 정신 물리학 실험을 수행했다. 해당 실험을 통해서 사람은 형상 정보에 편향 되어있고, CNN은 질감 정보에 편향 되어  있음을 확인할 수 있었다.\n\n모델을 SIN/IN 데이터를 혼합하여 학습하면 모델을 형상 정보로 편향시킬 수 있다. 형상 정보로 편향된 모델이 기존 IN 데이터로만 학습된 모델보다 더 좋은 성능을 나타냄과 동시에 전이 학습(Transfer learning)에서도 성능 개선이 유효함을 확인할 수 있었다. 따라서 본 논문에서 제안한 SIN/IN 데이터 학습이 인공지능 모델을 일반화(Generalization) 시키는데 기여한다라고 이야기할 수 있다.\n\n\n참고자료\nIMAGENET-TRAINED CNNS ARE BIASED TOWARDS TEXTURE; INCREASING SHAPE BIAS IMPROVES ACCURACY AND ROBUSTNESS\n\nThanks to\n정미연\n김형섭\n권해용\n김철환(markkch@naver.com)\n김보섭\n\n","dateCreated":"2019-08-06T16:23:55+09:00","dateModified":"2021-11-26T21:08:48+09:00","datePublished":"2019-08-06T16:23:55+09:00","description":"\n이번 포스팅은 논문 ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness을 읽고 읽은 내용을 포스팅한다.","headline":"How the Eye of A.I Sees","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1495055154266-57bbdeada43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/","keywords":"CNN, Convolutional Neural Network, Shape Bias, Texture Bias","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="이번 포스팅은 논문 ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness을 읽고 읽은 내용을 포스팅한다.">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="How the Eye of A.I Sees">
+<meta property="og:url" content="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="이번 포스팅은 논문 ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness을 읽고 읽은 내용을 포스팅한다.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1495055154266-57bbdeada43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80">
+<meta property="article:published_time" content="2019-08-06T07:23:55.000Z">
+<meta property="article:modified_time" content="2021-11-26T12:08:48.907Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="CNN">
+<meta property="article:tag" content="Convolutional Neural Network">
+<meta property="article:tag" content="Shape Bias">
+<meta property="article:tag" content="Texture Bias">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1495055154266-57bbdeada43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1495055154266-57bbdeada43e"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1495055154266-57bbdeada43e"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            How the Eye of A.I Sees
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-08-06T16:23:55+09:00">
+	
+		    Aug 06, 2019
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Ai/">Ai</a>, <a class="category-link" href="/categories/Ai/Paper-review/">Paper review</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%EB%AC%B4%EC%97%87%EC%9D%B4-%EB%A7%9E%EB%8A%94-%EB%A7%90%EC%9D%BC%EA%B9%8C"><span class="toc-text">무엇이 맞는 말일까??</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%BB%A8%EB%B3%BC%EB%A3%A8%EC%85%98-%EB%89%B4%EB%9F%B4-%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-Convolutional-Neural-Network-%EA%B0%80-%EB%AC%B4%EC%97%87%EC%97%90-%ED%8E%B8%ED%96%A5%EB%90%98%EB%8A%94%EC%A7%80-%EB%B0%94%EB%9D%BC%EB%B3%B4%EB%8A%94-%EB%91%90-%EA%B0%80%EC%A7%80-%EA%B4%80%EC%A0%90"><span class="toc-text">컨볼루션 뉴럴 네트워크(Convolutional Neural Network)가 무엇에 편향되는지 바라보는 두 가지 관점</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%ED%98%95%EC%83%81%EC%A0%95%EB%B3%B4-%EA%B0%80%EC%84%A4-Shape-Hypothesis"><span class="toc-text">형상정보 가설(Shape Hypothesis)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%A7%88%EA%B0%90-%EC%A0%95%EB%B3%B4-%EA%B0%80%EC%84%A4-Texture-Hypothesis"><span class="toc-text">질감 정보 가설(Texture Hypothesis)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%EC%8B%A4%ED%97%98"><span class="toc-text">실험</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#CNN%EA%B3%BC-%EC%82%AC%EB%9E%8C%EC%9D%98-%EC%8B%9C%EA%B0%81-%EC%8B%9C%EC%8A%A4%ED%85%9C%EC%9D%80-%EC%84%9C%EB%A1%9C-%EC%96%B4%EB%96%BB%EA%B2%8C-%EB%8B%A4%EB%A5%BC%EA%B9%8C-Psychophysical-Experiments"><span class="toc-text">CNN과 사람의 시각 시스템은 서로 어떻게 다를까? (Psychophysical Experiments)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EB%8D%B0%EC%9D%B4%ED%84%B0-%EC%85%8B"><span class="toc-text">데이터 셋</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EB%AA%A8%EC%88%9C%EB%90%9C-%EC%98%81%EC%83%81-Cue-Conflict"><span class="toc-text">모순된 영상(Cue Conflict)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%8B%A4%ED%97%98-%EA%B2%B0%EA%B3%BC"><span class="toc-text">실험 결과</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CNN%EC%9D%B4-%EC%82%AC%EB%9E%8C%EA%B3%BC-%EB%B9%84%EC%8A%B7%ED%95%98%EA%B2%8C-%EB%B3%B4%EA%B2%8C-%ED%95%98%EB%A0%A4%EB%A9%B4-%EB%B9%84%EC%8A%B7%ED%95%98%EA%B2%8C-%EB%B3%B4%EA%B2%8C-%EB%90%9C%EB%8B%A4%EB%A9%B4"><span class="toc-text">CNN이 사람과 비슷하게 보게 하려면? 비슷하게 보게 된다면?</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%EC%9A%94%EC%95%BD"><span class="toc-text">요약</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%EC%B0%B8%EA%B3%A0%EC%9E%90%EB%A3%8C"><span class="toc-text">참고자료</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Thanks-to"><span class="toc-text">Thanks to</span></a></li></ol>
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br><span id="more"></span></p>
+<h1 id="무엇이-맞는-말일까"><a href="#무엇이-맞는-말일까" class="headerlink" title="무엇이 맞는 말일까??"></a>무엇이 맞는 말일까??</h1><h2 id="컨볼루션-뉴럴-네트워크-Convolutional-Neural-Network-가-무엇에-편향되는지-바라보는-두-가지-관점"><a href="#컨볼루션-뉴럴-네트워크-Convolutional-Neural-Network-가-무엇에-편향되는지-바라보는-두-가지-관점" class="headerlink" title="컨볼루션 뉴럴 네트워크(Convolutional Neural Network)가 무엇에 편향되는지 바라보는 두 가지 관점"></a>컨볼루션 뉴럴 네트워크(Convolutional Neural Network)가 무엇에 편향되는지 바라보는 두 가지 관점</h2><p>형상 정보 가설과 질감 정보 가설(Shape Hypothesis vs Texture Hypothesis)</p>
+<h3 id="형상정보-가설-Shape-Hypothesis"><a href="#형상정보-가설-Shape-Hypothesis" class="headerlink" title="형상정보 가설(Shape Hypothesis)"></a>형상정보 가설(Shape Hypothesis)</h3><p>많은 사람들은 컨볼루션 뉴럴 네트워크(Convolutional Neural Network; 이하 CNN)가 <em>“레이어가 깊어질 수록 저-레벨(low level)의 특징(feature)을 조합해서 고-레벨(high level) 특징(feature)을 만들고, 이 특징들을 이용하여 객체인식을 한다.”</em> 이라는 직관에 동의할 것이다.</p>
+<p><img src="layer12-de7c9aef-a43f-4314-9c83-0034c314fa4a.png" alt=""></p>
+<p><img src="layer3-78e973d7-5554-4638-a0b5-51f93ad0df7f.png" alt=""></p>
+<p>[그림 1] ZF-Net으로 시각화한 layer들의 특징</p>
+<p>CNN이 객체 분류를 어떻게 하는지에 대한 공통된 해석은 여러 문헌에서도 나타나는데 Kriegeskorte과 LeCun은 그들이 저술한 <a target="_blank" rel="noopener" href="https://pdfs.semanticscholar.org/fd88/2a24391a05bf4cf92e8259101f7944d88a56.pdf">논문</a> 혹은 <a target="_blank" rel="noopener" href="https://www.researchgate.net/profile/Y_Bengio/publication/277411157_Deep_Learning/links/55e0cdf908ae2fac471ccf0f/Deep-Learning.pdf">아티클</a>에서 아래와 같이 언급했다.</p>
+<blockquote>
+<p>CNN은 각 카테고리(강아지, 고양이)가 가지고있는 고유한 패턴과 같은 지식을 얻는다.  … (중략) … 고-레벨(high level)의 특징들은 실제 영상(생성되거나 조작되지 않은 영상)에서 나타나는 형상(shape; 이하 형상) 정보를 배우는 것 처럼 보인다.</p>
+<p>CNN의 중간 레이어들은 같은 카테고리의 객체들에게서 유사한 부분을 인식한다. …(중략) … 객체를 검출하는 것은 이러한 부분들의 조합이다.</p>
+</blockquote>
+<p>이렇게 CNN이 형상 정보를 학습한다는 주장을 <strong>형상 정보 가설 (Shape Hypothesis)</strong>부른다.</p>
+<p>형상 가설은 수많은 실험을 통해서 지지를 받는데, 대표적으로 <a target="_blank" rel="noopener" href="https://cs.nyu.edu/~fergus/papers/zeilerECCV2014.pdf">ZF-Net</a>이 있다. <a target="_blank" rel="noopener" href="https://cs.nyu.edu/~fergus/papers/zeilerECCV2014.pdf">ZF-Net</a>은 모델의 레이어로부터 특징들을 추출한다. 그 후 역-컨볼루션(De-Convolution)이라는 연산을 통해서 추출한 특징을 시각화한다. [그림 1]은 ZF-Net에서 추출한 특징을 시각적으로 보여준다.</p>
+<p>Kubilius라는 연구자는 CNN을 사람의 <a target="_blank" rel="noopener" href="https://journals.plos.org/ploscompbiol/article/file?id=10.1371/journal.pcbi.1004896&amp;type=printable">시각 인지 모델로써 제안</a>했으며 Ritter는 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1706.08606.pdf">CNN이 아이들과 유사하게 형상 정보를 개발해나간다</a>는 것을 밝혀냈다. Ritter가 이야기하는 형상 정보를 개발한다는 것의 의미는 색감(Colour) 정보 보다는 형상 정보가 객체 분류를 하는데 더 중요한 역할을 한다는 것을 의미한다. </p>
+<p>실제로 형상 정보 가설은 사람의 인지 체계와 매우 비슷하기도 하다. 사람은 모양이 바뀌면 다른 카테고리로 분류하지만 질감 및 크기가 변화하더라도 같은 모양이면 같은 객체 카테고리로 인식한다. 이는 <a target="_blank" rel="noopener" href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.331.3386&amp;rep=rep1&amp;type=pdf">해당 연구 결과</a>를 통해서 확인되었다.</p>
+<p><img src="Experimental-Stimuli-A-Examples-of-stimuli-used-in-Experiment-1-Scenes-and-objects-4291356f-3c4c-46d0-8e7d-987059291c32.png.jpeg" alt=""></p>
+<p>[그림 2] 사람은 질감과는 관계없이 모양에 따라 같은/다른 물체로 인식한다.</p>
+<p><strong>Summary</strong></p>
+<ul>
+<li>형상정보 가설(Shape Hypothesis)는 CNN이 객체의 거시적인 형상을 보고 인식을 한다는 가설이다.</li>
+<li><p>가설을 지지하는 실험들이 여러 논문들을 통해서 확인되었다.</p>
+<p>  ZF-Net, A Shape Bias Case Study, </p>
+</li>
+<li><p>이러한 형상정보 가설은 사람의 인지체계와도 제일 유사한 측면을 갖는다.</p>
+</li>
+</ul>
+<h3 id="질감-정보-가설-Texture-Hypothesis"><a href="#질감-정보-가설-Texture-Hypothesis" class="headerlink" title="질감 정보 가설(Texture Hypothesis)"></a>질감 정보 가설(Texture Hypothesis)</h3><p>몇몇 연구 결과들은 형상 정보 가설과 상반되는 결과를 얻기도 했다. 대표적으로 연결이 부분적으로 끊어진 네트워크에서 학습된 모델은 질감 정보(Texture; 이하 질감)가 더 중요한 역할을 한다는 연구가 있다. <a target="_blank" rel="noopener" href="https://www.researchgate.net/profile/Alexander_Ecker/publication/319940454_Texture_and_art_with_deep_neural_networks/links/59d814150f7e9b12b3612c60/Texture-and-art-with-deep-neural-networks.pdf">해당 연구</a>에서는 CNN이 전반적인 형상 정보가 없어도 질감 정보를 이용해서 영상을 잘 분류할 수 있다는 것을 증명한다. 오히려 질감 정보가 없는 형상 정보(스케치 그림)만으로 학습한 CNN은 나쁜 인식 성능을 갖는다.</p>
+<p><img src="Screenshot_from_2019-07-26_15-42-51-76e6b3c4-a54d-49d0-ad13-bd29cd6e7614.png" alt=""></p>
+<p>[그림 3] CNN의 질감 정보만을 이용한 분류 예시</p>
+<p><img src="Screenshot_from_2019-07-26_15-52-57-28ac9b25-f52b-47bf-9d2d-de62245dc131.png" alt=""></p>
+<p><img src="Screenshot_from_2019-07-26_15-54-14-9bc52e1c-cf20-4470-9476-1ddee077e191.png" alt=""></p>
+<p>[그림 4] 질감 정보가 없는 스케치 데이터로만 학습했을 때, 새(bird) 데이터를 얼마나 많이, 자주 틀리는지에 대한 예시</p>
+<p>두 가지 결과는 질감 정보와 같은 지역적인 정보(Local feature)만을 이용해서 객체 인식 문제를 충분히 해결할 수 있다는 것을 시사한다. 이를 증명한 연구결과는 <a target="_blank" rel="noopener" href="https://papers.nips.cc/paper/5633-texture-synthesis-using-convolutional-neural-networks.pdf">여기</a>에서 확인할 수 있다. </p>
+<p>질감 정보의 중요성을 이야기하는 또 다른 연구에서는 질감 정보를 학습하고 특정 질감 정보를 생성하는 네트워크를 만들었다. 이렇게 질감 정보를 종류별로 학습하고 생성한다는 것은 모델이 세 가지의 기능을 수행한다는 의미를 갖는다.</p>
+<ol>
+<li>종류별 질감 정보를 분류한다.</li>
+<li>종류별 질감 정보의 분포를 학습한다.</li>
+<li>특정 질감 정보의 분포를 생성 한다.</li>
+</ol>
+<p><em>해당 네트워크는 분류(Classification)를 하는 네트워크가 아니다. 하지만 질감 정보를 종류별로 생성한다는 것은 “질감 정보의 분포가 서로 다르기 때문에 질감 별로 분리해서 학습할 수 있다”는 것을 내포한다. 이런 맥락에서 논문의 저자는 질감 정보만으로 객체 분류 문제를 풀 수 있다고 이야기하는 듯 하다.</em></p>
+<p><img src="Screenshot_from_2019-07-26_16-04-33-a8313feb-2a86-42ed-b50c-be0dc81d9680.png" alt=""></p>
+<p>[그림 5] 질감정보를 생성하는 네트워크</p>
+<p>그 외에도 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=SkfMWhAqYQ">다른 연구</a>에서는 최대 리셉티브 필드의 크기에 제한을 둔 BagNet을 설계했다. BagNet은 최대 리셉티브 필드 크기의 제한으로 CNN이 국부적인 정보만 볼수 있게끔 시야가 제한이 되었다. 그럼에도 불구하고 ImageNet 데이터에서 놀라울 정도로 높은 정확도를 갖는 결과를 얻었다. 이러한 결과들을 보았을 때 국부적인 질감 정보는 객체 분류를 하는데 충분한 정보를 가지고 있음을 알 수 있다. CNN은 이런 질감 정보을 추론하는데 이를 <strong>질감 정보 가설(Texture Hypothesis)</strong>라고 부른다.</p>
+<p><img src="Screenshot_from_2019-07-26_17-17-05-c8099ac0-ddd8-4d8f-a93f-e75eaddb5ffc.png" alt=""></p>
+<p>[그림 6] 최대 리셉티브 필드의 크기가 제한된 Bag Net의 최종 Layer에서 확인된 Feature들</p>
+<p><strong>Summary</strong></p>
+<ul>
+<li>질감정보 가설(Texture Hypothesis)는 CNN이 객체의 국부적인 질감정보를 보고 인식을 한다는 가설이다.</li>
+<li>가설을 지지하는 실험들이 여러 논문을 통해서 확인되었다.</li>
+</ul>
+<hr>
+<p>지금까지 형상 정보 가설(Shape Hypothesis)와 질감 정보 가설(Texture Hypothesis)를 살펴보았다. 이렇게 상반되는 두 가지 가설을 해결하는 것은 인공지능 커뮤니티와 뇌 과학자 커뮤니티 모두에게 중요하다. </p>
+<p>해당 논문에서는 <a target="_blank" rel="noopener" href="https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Gatys_Image_Style_Transfer_CVPR_2016_paper.pdf">StyleGAN</a>을 이용하여 질감-형상 정보가 모순된 이미지(Cue Conflict)를 만들었다. 이를 이용하면 CNN과 사람의 시각 능력에 대해서 정량적으로 측정할 수 있게 된다. 이렇게 만든 질감-형상 정보가 모순된  이미지(Cue Conflict)를 이용해서 총 97명의 실험 참가자와 함께 9종류의 정신 물리학 실험(Psychophysical Experiments) 을 진행하였다. 총 실험의 횟수는 48,560번이었다.</p>
+<p>본 논문의 기여는 아래와 같다.</p>
+<ul>
+<li>CNN과 사람의 인지 차이를 확인함</li>
+<li>CNN의 편향의 변경할 수 있음을 확인함</li>
+<li>편향의 변경으로 생기는 효과를 확인함</li>
+</ul>
+<h1 id="실험"><a href="#실험" class="headerlink" title="실험"></a>실험</h1><p>CNN과 사람의 시각 시스템의 차이를 확실하게 확인하기 위해서 해당 논문에서는 여러가지 실험을 진행했다.<br><br/></p>
+<ol>
+<li>CNN과 사람의 시각 시스템은 서로 어떻게 다를까?(Psychophysical Experiments)</li>
+<li>데이터셋</li>
+<li>모순된 영상을 보여준다면? (Cue Conflict)</li>
+<li>실험 결과</li>
+<li>CNN이 사람과 비슷하게 보게 하려면? 비슷하게 보게 된다면?</li>
+</ol>
+<h2 id="CNN과-사람의-시각-시스템은-서로-어떻게-다를까-Psychophysical-Experiments"><a href="#CNN과-사람의-시각-시스템은-서로-어떻게-다를까-Psychophysical-Experiments" class="headerlink" title="CNN과 사람의 시각 시스템은 서로 어떻게 다를까? (Psychophysical Experiments)"></a>CNN과 사람의 시각 시스템은 서로 어떻게 다를까? (Psychophysical Experiments)</h2><p>CNN과 사람이 어떻게 물체를 인식하느냐(질감 정보를 기반으로 인식하느냐? vs 형상 정보를 기반으로 인식하느냐?)를 확인하기 위해서 정신 물리학(Psychophysical Experiments; 이하 정신 물리학) 실험을 진행하였다.</p>
+<p>실험 내용은 16-Class-ImageNet이라는 데이터 셋을 사람과 CNN에게 똑같이 보여주고 이미지 분류 작업 결과를 확인하였다. 실험 참가자는 총 97명이었으며 16-Class-ImageNet의 데이터수는 49K(49,000)였다.</p>
+<p>사람과 CNN이 본질적으로 큰 차이가 있기 때문에 실험은 굉장히 신중하게 설계 되었어야 했다. CNN은 단일의 영상 정보를 한번만 네트워크에 입력하지만 사람의 시각 시스템은 연속된 정보(동영상)을 획득하고 뇌에서는 이를 기반으로 각 신경끼리 피드백을 주고받는다. 따라서 단순하게 영상을 보여주고 분류하는 실험은 CNN과 사람에게 <strong>단 한장의 영상만 보고 분류를 한다</strong>라는 실험 조건에서 <em>단 한장</em>이 서로 다를 수 있다.</p>
+<p>실험을 최대한 공평하게 진행하기 위해서는 사람과 CNN의 실험 조건을 같게 설정 해야했다. 사람의 시각 시스템에서 발생하는 피드백은 영상을 제공하는 순서와 타이밍을 조절하여 최소화하였다. 이러한 방법은 이미 정신 물리학적 실험에서는 잘 알려진 사실이라고 논문에서는 언급한다. 하지만 <em>의학적인 참고자료가 제시되어있지 않아서 더 자세한 근거는 확인하지 못했다.</em></p>
+<ol>
+<li>200ms 동안 분류작업을 할 영상을 보여준다.</li>
+<li>300ms 동안 고정된 사각형 이미지를 보여준다.</li>
+<li>1/f 스펙트럼을 가진 노이즈 마스크를 200ms동안 보여준다.</li>
+</ol>
+<p><img src="screenshot-from-2018-05-17-20-24-45-00c8ba94-f94d-422b-aa73-cc123fe604e4.png" alt=""></p>
+<p><a target="_blank" rel="noopener" href="https://neurdiness.wordpress.com/2018/05/17/deep-convolutional-neural-networks-as-models-of-the-visual-system-qa/">[그림 7]</a> CNN과 사람의 시각 시스템의 비교</p>
+<h2 id="데이터-셋"><a href="#데이터-셋" class="headerlink" title="데이터 셋"></a>데이터 셋</h2><p>해당 연구의 실험에서는 사람과 CNN이 서로 어떤 가설을 기반으로 인지를 하는지 확인하는 것이 목적이므로 16-Class ImageNet 데이터를 왜곡하여서 진행하였다. </p>
+<ul>
+<li>Original</li>
+<li>GreyScale</li>
+<li>Silhouette</li>
+<li>Edges</li>
+<li>Texture</li>
+<li>Cue Conflict (모순된 영상)</li>
+</ul>
+<p><img src="Screen_Shot_2019-08-05_at_12-5e21295c-52d8-4807-8d6e-87b8800647cf.44.50_AM.png" alt=""></p>
+<p>[그림 8] 16-Class ImageNet 예시</p>
+<h2 id="모순된-영상-Cue-Conflict"><a href="#모순된-영상-Cue-Conflict" class="headerlink" title="모순된 영상(Cue Conflict)"></a>모순된 영상(Cue Conflict)</h2><p>기본적인 이미지 왜곡 외에도 서로 다른 형상 정보와 질감 정보가 섞여 있어 모순을 일으키는 Cue Conflict 영상으로도 실험을 진행하였다.</p>
+<p><img src="Screen_Shot_2019-08-05_at_12-f4524e3d-8c7d-469a-8bd1-2d246a21a446.50.32_AM.png" alt=""></p>
+<p>[그림 9] Silhouettes를 이용한 Cue Conflict 영상(위에서 3번째)과 Style transfer를 이용한 Cue Conflict 영상(위에서 네 번째)</p>
+<p>Cue Conflict 영상을 만들기 위해서 두 가지 방법을 적용하였다.</p>
+<ol>
+<li>세그멘테이션 맵을 이용해 다른 영상 정보를 혼합하는 방법(filled silhouettes)</li>
+<li>Style GAN을 이용하여 영상 정보를 혼합하는 방법(style transfer)</li>
+</ol>
+<p>연구자들이 막상 이러한 영상을 만들고 나니까 문득 든 생각이 <strong>해당 영상들이 실제 형상 정보와 질감 정보가 완전히 모순 되어 있다는 것을 어떻게 증명할 수 있을까?</strong> 였다. 이를 증명하기 위해서 연구자들은 앞서 언급했던 Bag Net를 사용하였다.</p>
+<p>Bag Net는 최대 리셉티브 필드의 크기를 제한하여 CNN이 이미지의 전체 형상을 보지 못하게 만든 모델이다. 국부적인 특징(local feature)들만 이용했음에도 불구하고 BagNet은 굉장히 좋은 성능을 나타내었는데 만약 국부적인 특징(Texture)이 전체적인 특징(Shape)과 모순되어있다면(Cue conflict) Bag Net의 성능이 급격히 하락할 것이다.</p>
+<p>실제로 Bag Net을 이용하여 Cue conflict 영상을 추론해본 결과 기존 ImageNet 데이터에서 성능이 잘 나오던 모델이 약 85% 정도의 성능 하락 발생한 것을 할 수 있었다.(ImageNet, 70.0% top-5 accuracy → Cue conflict, 10.0% top-5 accuracy)</p>
+<p>이를 토대로 생성된 Cue conflict 영상이 형상 정보와 질감 정보가 모순되어 있다는 것을 확인할 수 있었다.</p>
+<h2 id="실험-결과"><a href="#실험-결과" class="headerlink" title="실험 결과"></a>실험 결과</h2><p>실험 결과 사람과 CNN이 물체를 분류하는 작업에서 큰 차이를 볼 수 있었다. 사람은 굉장히 형상 정보에 편향되어 있고, CNN은 질감 정보에 편향되어 있음을 확인할 수 있었다.</p>
+<p>이는 고양이 형상에 코끼리 가죽 질감 정보가 섞여있는 Cue conflict 영상을 사람과 CNN에게 보여주었을 때, CNN은 이를 <strong>“코끼리”</strong>로 사람은 이를 <strong>“고양이”</strong>로 인식한다는 이야기가 된다.</p>
+<p><img src="Screen_Shot_2019-07-24_at_2-3f1bbca5-9002-432e-a761-3e9cf949f3dc.56.43_PM.png" alt=""></p>
+<p>[그림 10] CNN과 사람의 시각 시스템의 차이. 왼쪽은 형상 정보 편향을 의미하고 오른쪽으로 질감 정보 편향을 의미한다. 해당 그림에서 사람은 형상 정보에 편향 되어있음을 CNN은 질감 정보에 편향 되어있음을 확인할 수 있다.</p>
+<h2 id="CNN이-사람과-비슷하게-보게-하려면-비슷하게-보게-된다면"><a href="#CNN이-사람과-비슷하게-보게-하려면-비슷하게-보게-된다면" class="headerlink" title="CNN이 사람과 비슷하게 보게 하려면? 비슷하게 보게 된다면?"></a>CNN이 사람과 비슷하게 보게 하려면? 비슷하게 보게 된다면?</h2><p>연구자들은 이제 <strong>CNN이 사람과 비슷하게 형상 정보에 편향되면 어떻게 될까?</strong>가 궁금해졌다. 그래서 기존의 <strong>IN</strong>(ImageNet) 데이터와 <strong>SIN</strong>(Sytle transfered ImageNet)데이터를 이용하여 학습을 진행하였다.</p>
+<p>학습 방법에 대해서는 다양한 실험을 진행했다</p>
+<ol>
+<li>IN 학습 → IN으로 평가</li>
+<li>IN 학습 → SIN으로 평가</li>
+<li>SIN 학습 → IN으로 평가</li>
+<li>SIN 학습 → SIN으로 평가</li>
+<li>IN과 SIN을 혼합해서 학습 → IN으로 평가</li>
+<li>IN과 SIN을 혼합하여 학습 후 IN으로 파인튠 → IN으로 평가</li>
+</ol>
+<p>학습 후에는 모델이 효과적으로 형상 정보 편향이 되었는지 확인하기 위해 16-Class-ImageNet 데이터를 이용하여 이를 확인하였다. 전부는 아니지만 많은 클래스에 대해서 CNN이 질감 정보 편향에서 형상 정보 편향으로 이동 하였음을 확인할 수 있었다.</p>
+<p><img src="Screen_Shot_2019-07-24_at_3-922d85d2-ebec-4437-9ae7-773da82ff745.51.49_PM.png" alt=""></p>
+<p>[그림 11] IN/SIN 데이터를 학습한 모델과 사람의 차이. 데이터를 혼합해서 학습한 모델이 그림 10. 과 비교했을 때 상대적으로 형상 정보 편향으로 이동되었음을 확인할 수 있다.</p>
+<p>결론적으로 해당 실험에서 <strong>SIN 데이터</strong>(형상 정보 편향)만으로는 성능을 더 개선시킬 수는 없었다. 하지만 <strong>IN</strong> 데이터와 <strong>SIN</strong>데이터를 혼합해서 학습하는 경우에는 ImageNet 데이터 셋만 이용해서 학습한 것보다는 성능이 더 좋아진다는 것을 확인하였다. 또한 형상 정보 편향이 된 CNN을 이용해 객체 검출(Object Detection) 모델에 전이 학습(Transfer learning)했을 때, 기존의 객체 검출 모델보다 성능이 더 개선 되었음을 확인할 수 있었다. 이는 <strong>SIN</strong>데이터를 혼합해서 학습하는 것이 모델의 일반화(Generalization)에 더 기여한다고 해석할 수 있다.</p>
+<p><img src="Screen_Shot_2019-07-24_at_3-7591f4fc-6465-4e77-a853-0821aa698abd.52.15_PM.png" alt=""></p>
+<p>[그림 12] IN데이터와 SIN 데이터를 이용한 CNN 학습 결과</p>
+<p>그 외에 노이즈를 이용한 영상 왜곡 실험을 추가로 진행했다. 이 경우에도 형상 정보에 편향된 CNN이 노이즈 왜곡에도 모델이 더 강인해짐을 확인할 수 있었다.</p>
+<p><img src="Screen_Shot_2019-07-24_at_5-2d3778ca-9b7d-43a9-ac91-217353e79e1e.38.52_PM.png" alt=""></p>
+<p>[그림 13] 추가 영상 왜곡 실험에서 사용한 노이즈 예시</p>
+<p><img src="Screen_Shot_2019-07-24_at_5-edcf9de5-0d18-47aa-a2f0-abe4fcacb91a.34.05_PM.png" alt=""></p>
+<p>[그림 14] 형상 정보, 질감 정보에 편향된 CNN이 노이즈 왜곡에 따라 나타내는 성능</p>
+<h1 id="요약"><a href="#요약" class="headerlink" title="요약"></a>요약</h1><ul>
+<li><p>기존의 CNN이 이미지 분류를 할 때, 형상 정보를 기반으로 인식을 한다는 <strong>형상 정보 가설(Shape Bias Hypothesis)</strong>와 질감 정보를 기반으로 인식한다는 <strong>질감 정보 가설(Texture Bias Hypothesis)</strong>가 존재했다.</p>
+</li>
+<li><p>사람과 CNN이 영상 데이터를 어떤 관점에서 분류하는지 확인하기 위해 정신 물리학 실험을 수행했다. 해당 실험을 통해서 사람은 형상 정보에 편향 되어있고, CNN은 질감 정보에 편향 되어  있음을 확인할 수 있었다.</p>
+</li>
+<li><p>모델을 SIN/IN 데이터를 혼합하여 학습하면 모델을 형상 정보로 편향시킬 수 있다. 형상 정보로 편향된 모델이 기존 IN 데이터로만 학습된 모델보다 더 좋은 성능을 나타냄과 동시에 전이 학습(Transfer learning)에서도 성능 개선이 유효함을 확인할 수 있었다. 따라서 본 논문에서 제안한 SIN/IN 데이터 학습이 인공지능 모델을 일반화(Generalization) 시키는데 기여한다라고 이야기할 수 있다.</p>
+</li>
+</ul>
+<h1 id="참고자료"><a href="#참고자료" class="headerlink" title="참고자료"></a>참고자료</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1811.12231.pdf">IMAGENET-TRAINED CNNS ARE BIASED TOWARDS TEXTURE; INCREASING SHAPE BIAS IMPROVES ACCURACY AND ROBUSTNESS</a></li>
+</ol>
+<h1 id="Thanks-to"><a href="#Thanks-to" class="headerlink" title="Thanks to"></a>Thanks to</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://lovablebaby1015.wordpress.com/">정미연</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.facebook.com/profile.php?id=100024472417238">김형섭</a></li>
+<li><a target="_blank" rel="noopener" href="https://gogyzzz.blogspot.com/">권해용</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kch8909">김철환</a>(<a href="mailto:markkch@naver.com">markkch@naver.com</a>)</li>
+<li><a target="_blank" rel="noopener" href="https://aisolab.github.io/">김보섭</a></li>
+</ul>
+
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-ckwjb6wnt000h7tocg9gr5vur"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1495055154266-57bbdeada43e?ixlib=rb-1.2.1#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1495055154266-57bbdeada43e?ixlib=rb-1.2.1#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/CNN/" rel="tag">CNN</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Convolutional-Neural-Network/" rel="tag">Convolutional Neural Network</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Shape-Bias/" rel="tag">Shape Bias</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Texture-Bias/" rel="tag">Texture Bias</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/01/05/20200105-2019_retrospective/"
+                    data-tooltip="2019년 회고"
+                    aria-label="PREVIOUS: 2019년 회고"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    data-tooltip="Connect GPU to Minikube"
+                    aria-label="NEXT: Connect GPU to Minikube"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2022 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/01/05/20200105-2019_retrospective/"
+                    data-tooltip="2019년 회고"
+                    aria-label="PREVIOUS: 2019년 회고"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                    data-tooltip="Connect GPU to Minikube"
+                    aria-label="NEXT: Connect GPU to Minikube"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                16 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

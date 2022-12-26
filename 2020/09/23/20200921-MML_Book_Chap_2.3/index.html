@@ -1,0 +1,1366 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스 - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,Math,Linear algebra,Vector,Linear equation,Matrix">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n\n시작하기직관적인 개념을 형식화할 때, 공통적인 접근법은 다음과 같습니다.\n\n객체(object, symbol)의 집합(set)을 만든다.\n만든 객체들을 조작(manipulate)하기 위한 규칙을(rule) 만든다.\n\n이러한 접근법으로 만들어진 개념들의 집합은 우리에게 대수(Algebra)라고 알려져 있습니다.\n\n선형대수는 벡터(vector)와 벡터들을 조작하기 위한 규칙들을 연구하는 학문입니다. \n벡터라고 하면 많은 사람이 고등학교에서 배운 geometric vector를 생각합니다. 하지만 책에서는 벡터의 일반화된 개념에 대해서 논의합니다.\n​    \n벡터의 정의A라는 유형을 갖는 객체가 있다고 가정해봅시다. 이때,\n\n객체끼리 더함\n스칼라(scalar, 상수)를 객체에 곱함\n\n1), 2)라는 연산의 결과로 같은 유형의 객체(A라는 유형의 객체)가 나온다면 이를 벡터라고 정의합니다.\n다시 말해, 수학적인 관점에서 벡터는 아래 두 성질을 충족하면 벡터로 간주합니다.\n\n벡터끼리 덧셈 연산을(add) 했을 경우 벡터가 나옴\n벡터에 스칼라를 곱했을 때, 벡터가 나옴\n\n벡터에 대한 대표적인 예는 아래와 같습니다.\n\nGeometric vectors:\nFigure 2.1 (a) 에서 표현하고 있는 geometric vector는  고등학교 수학이나 물리에서 많이 배워 매우 친숙한 벡터입니다.\n\nPolynomial vectors:\nFigure 2.1 (b) 에서 표현하고 있는 polynomial(다항식) 또한 벡터입니다.\n두 다항식은 서로 더해질 수 있으며, 더해진 결과 또한 다항식입니다. 그리고 다항식은 스칼라( \\lambda \\in R )로 곱셈 연산을 해도 다항식입니다. 따라서 다항식 또한 벡터입니다.\n\n\n그 외에도 3. Audio signals, 4. Elements of R^{n} (tuples of n real numbers)도 벡터입니다.\n\nAudio signals, Elements of $R^{n}$은 내용상 크게 문제가 되지 않기 때문에 생략했습니다.\n자세히 알고싶은 분들은 MML Book 18 page를 참고하시면 됩니다.\n\n\n​    \n책에서 초점을 두고 설명하고자 하는 것본 책에서는 다음과 같은 내용에 초점을 두고 선형 대수를 설명합니다.\n\n선형 대수의 대부분 알고리즘은 R^{n} 공간에서 정의가 됩니다. 따라서 책에서는 주로 R^{n} 공간의 벡터에 대해서 초점을 맞춰 설명합니다. 특히 chapter 8에서 데이터를  R^{n}공간의 벡터로 간주하고 설명할 것입니다.\n유한 차원 벡터 공간에(finite dimensional vector space) 초점을 맞춥니다. 유한 차원 벡터 공간의 경우, 모든 종류의 벡터와  R^{n}공간 간의 1:1 대응이 존재합니다.\n\n​    \n선형 대수와 기계학습 알고리즘 간의 상관관계만약 내가 새로운 연산자(operator)를 만들었다고 생각해봅시다. 이때, 내가 제안한 연산(operation)으로 만들어지는 것들의 집합은 무엇인가?라는 궁금증이 생길 수 있습니다.\n이를 선형대수 관점에서 다시 생각해보면, 작은 벡터의 집합에서 시작해서 서로 더해지고, 스케일링 되었을 때의 그 결과인 벡터들의 집합은 무엇인가?와 같습니다. 이 질문에 대한 답은 Section 2.4에서 언급할 vector space가 됩니다. vector space의 개념과 속성은 기계학습 알고리즘의 기초가 됩니다.\n선형대수는 기계학습과 수학에서 중요한 역할을 합니다. 이번 장에서 소개되는 개념들은 chapter 3에서 geometry에 대한 아이디어로 확장됩니다. chapter 5에서는 벡터 미적분(vector calculus)에 대해서 논의합니다. 벡터 미적분은 매트릭스 연산에 대한 지식이 필수적으로 요구됩니다. chapter 10에서는 PCA를 활용한 차원 축소를 위해 사영(projection)을 사용할 것입니다. chapter 9에서는 선형 회귀(linear regression)에 대해서 논의합니다. 선형 회귀에서 선형대수는 least-square problems을 푸는 중요한 역할을 합니다.\n\n​    \n선형 시스템(Systems of Linear Equations)선형 시스템은 선형 대수에서 중심적인 역할을 합니다. 많은 문제는 선형 시스템으로 형식화되며, 선형대수는 이를 풀 수 있는 도구를 제공합니다.\n​    \nExample 2.1\n어떤 회사가 리소스 R_{1}, ... ,R_{N} 가 들어가는 제품 N_{1}, ... ,N_{n} 을 생산합니다. 이때, N_{j}의 일부 파트를 생산하기 위해서 리소스 R_{i}의 일부인 a_{ij}가 필요합니다. (i=1,...,m, j=1,...,n).\n우리의 목적은 한정된 리소스에서 얼마나 많은 제품을 만들 수 있는지에 대한 최적의 생산 계획을 찾는 것입니다. 예를 들어 “우리에게 리소스 b_{i}가 있을 때,  제품 N_{j}의 일부 파트인 x_{j}를 얼마나 많이 생산할 수 있는가?”와 같은 질문의 답을 찾는 것이지요.\n만약 우리가 제품과 대응되는 파트들 x_{i},...,x_{n}을 생산할 때, 다음과 같은 리소스가 필요하게 됩니다.\na_{i1}x_{1} + ... + a_{in}x_{n}\\ \\  (2.2)이때, 최적의 생산계획은 실수공간에 존재하게 됩니다(x_{1},...,x_{n}) \\in R^{n}. 따라서, 최적의 생산 계획은 아래의 선형 시스템을 만족하는 해를 찾으면 됩니다.\n\\begin{matrix}\n  a_{11}x_{1} + ... + a_{1n}x_{n} =  b_{1}\\\\ \n  ...\\\\\n  a_{m1}x_{1} + ... + a_{mn}x_{n} = b_{m} \n\\end{matrix}, \\ \\ \\ a_{ij} \\in R, \\ b_{i} \\in R \\ \\ (2.3)식 (2.3)은 일반적인 형태의 선형 시스템입니다.\nx_{1},...,x_{n},\\ \\ \\ \\ (x_{1},...,x_{n}) \\in R^{n}은 시스템에서 미지수가 되며, 식 (2.3) 을 만족하는 해가 이 선형 시스템의 해가 됩니다.\n​    \nExample 2.2\n다음 선형 시스템이 있을 때,\n\\begin{matrix}\n  x_{1} + x_{2} + x_{3} = 3\\ \\ \\ \\  (1)\\\\ \n  x_{1} - x_{2} + 2x_{3} = 2\\ \\ \\ (2)\\\\ \n  2x_{1} + 3x_{3} = 1 \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ (3)\\\\\n\\end{matrix}이 선형 시스템은 해가 없습니다. (1)과 (2)를 더하면 2x_{1} + 3x_{3} = 5입니다. 이 결과를 (3)과 빼게되면, 부등식은 모순이 됩니다. 이 경우에는 선형 시스템에 해는 없게 됩니다.\n또 다른 선형 시스템을 살펴봅시다.\n\\begin{matrix}\n  x_{1} + x_{2} + x_{3} = 3\\ \\ \\ \\  \\ (1)\\\\ \n  x_{1} - x_{2} + 2x_{3} = 2\\ \\ \\ (2)\\\\ \n\\ \\ \\ \\ \\ \\ \\ x_{2} + x_{3} = 2 \\ \\ \\ \\ \\ \\ \\ (3)\\\\\n\\end{matrix}이를 위와 같은 방식으로 풀게 되면, (x_{1} = 1, x_{2} = 1, x_{3}=1)이 유일한 해(유일해; unique solution)가 됩니다.\n마지막으로 아래 선형 시스템을 살펴봅시다.\n\\begin{matrix}\n  x_{1} + x_{2} + x_{3} = 3\\ \\ \\ \\  \\ (1)\\\\ \n  x_{1} - x_{2} + 2x_{3} = 2\\ \\ \\ (2)\\\\ \n2x_{1} + 3x_{3} = 5 \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ (3)\\\\\n\\end{matrix}이를 똑같이 풀어보면, (1)과 (2)를 더한 결과가 (3)과 같음을 확인할 수 있습니다.\n이때, (1)과 (2)를 이용해서 2x_{1} = 5 - 3x_3{}, 2x_{2} = 1+x_{3}을 얻을 수 있습니다.\n$x_{3} = a \\in R$로 자유 변수(free variable)로 정의하면, 다음과 같은 해를 찾을 수 있습니다.\n(\\frac{5}{2} - \\frac{3}{2}a, \\frac{1}{2}+ \\frac{1}{2}a, a),\\ \\  a \\in R이 해는 무수히 많은 해가 존재한다는 것을 의미하며, 기하학적으로 Figure 2.3과 같습니다.\n\n일반적으로 실수값을 갖는 선형 시스템으로 구성된 시스템에서 우리는 아래와 같은 종류의 해를 구할 수 있습니다.\n\n해가 없음\n단 하나의 해\n무한히 많은 해\n\n선형 회귀(linear regression)은 Example 2.1과 같은 예제에서 선형 시스템을 풀지 못했을 경우 이를 푸는 방법입니다.\n​    \n선형 시스템에 대한 기하학적 해석(Geometric Interpretation of System of Linear Equation)두 개의 변수(x_{1}, x_{2})를 갖는 선형 시스템에서 각각의 시스템은 x_{1} - x_{2}  평면에서 하나의 선이 됩니다.\n만약에 각 시스템을 모두 만족하는 해가 있다면, 이 해는 각 선의 교집합이 됩니다.\n이 교집합은 다음과 같은 형태로 나타납니다.\n\n점이 되거나(교차) \n선이 되거나(겹침)\n공집합(평행; 해가 없음).\n\n이를 확장하여 변수가 세 개가 된다면, 각 시스템은 면(plane)이 되며, 교집합은 선(line)이 됩니다.\n이때의 교집합은 1)면, 2)선, 3)점, 4)공집합(해가 없음)으로 나타나게 됩니다.\n​    \n행렬 (Matrices)행렬 또한 선형 대수에서 중요한 역할을 합니다. 행렬은 선형 시스템을 간단히 표기하는데 사용하기도 하지만, Section 2.7에서 살펴볼 선형 함수(linear mapping)를 표현하기도 합니다.\n행렬의 재밌는 주제를 논의하기 전에 먼저, 1) 행렬이 무엇이고, 2) 행렬로 어떤 연산이 가능한지 살펴봅시다.\n​    \nDefinition 2.1 (Matrix)\n $m, n \\in N,\\ \\ N \\in R$인 $(m, n)$ 행렬 $A$는 $m$ rows와 $n$ columns으로 구성된 직사각형 구조를 갖습니다. \n행렬의 원소 $a_{ij},\\ i=1,…,m,\\ j=1,…,n$ 는 $m\\cdot n$ - tuple입니다.\nA = \\begin{bmatrix}\n        a_{11} & a_{12} & ... & a_{1n}\\\\ \n        a_{21} & a_{22} & ... & a_{2n}\\\\\n        \\vdots & \\vdots & & \\vdots \\\\\n        a_{m1} & a_{m2} & ... &  a_{mn} \n    \\end{bmatrix}, \\ \\ a_{ij} \\in R일반적으로 $(1, n)$-행렬은 rows라고 부르고, $(m, 1)$-행렬은 columns라고 부릅니다.\nrows, colums와 같이 특별한 행렬은 row, column vectors라고 부릅니다.\n$R^{m \\times n}$는 실수공간에 있는 $(m, n)$-행렬입니다.\n $A \\in R^{m \\times n}$는 모든 $n$ columns의 행렬이 길게 붙여진 $a \\in R^{mn}$과 같은 표현입니다.\n\n행렬의 표현이 달라질 뿐이지, 벡터 개념에서는 벗어나지 않는다는 것에 주목합시다.\n표현이 변경된 행렬은 다른 행렬을 더해도 같은 형태를 유지하는 행렬이며, 스칼라와 곱해도 같은 형태를 유지하는 행렬입니다. \n추가적으로, 우리가 알고 있는 행렬곱의 연산자(opration)를 일부 변경하면 R^{nm} 행렬 또한 행렬곱 정의가 가능합니다.\n\n\n​    \n행렬의 덧셈과 곱셈두 행렬 $A \\in R^{m \\times n}$, $B \\in R^{m \\times n}$의 합은 element-wise sum으로 정의됩니다\nA + B := \\begin{bmatrix}\n        a_{11} + b_{11} & ... & a_{1n} + b_{1n} \\\\ \n        \\vdots &  & \\vdots \\\\\n        a_{m1} + b_{m1} & ... & a_{mn} + b_{mn}\n        \\end{bmatrix} \\in R^{m \\times n}두 행렬 $A \\in R^{m \\times n}$, $B \\in R^{n \\times k}$가 있을 때, 행렬곱( $C = AB \\in R^{m \\times k}$)의 결과인 행렬 C 원소 $c_{ij}$는 다음과 같이 계산합니다\nc_{ij} = \\Sigma_{l=1}^{n} a_{il}b_{lj},\\ \\ \\ \\ i = 1,...,m,\\ \\ \\ \\ \\ j = 1,...,k.위와 같이 $A$의 $i$th row의 원소와 $B$의 $j$th columns의 원소끼리 곱하는 연산을 Section 3.2에서는 dot product라고 부르며, $A \\cdot B$로 표기합니다.\n​    \nRemark\n\n행렬의 곱은 인접 차원이 같아야합니다. 예를 들어 $n \\times k$ 행렬 $A$는 $k \\times m$ 행렬 $B$와 곱셈 연산을 수행할 수 있습니다. 이때, 행렬 $B$는 행렬 $A$ 우측에 있어야만 합니다.\n\\underbrace{A}_{n \\times k} \\underbrace{B}_{k \\times m} =\n\\underbrace{C}_{n \\times m}프로덕트(product) $BA$는 이웃 차원이 맞지 않기 때문에 정의되지 않습니다.\n\n​    \nRemark\n\n행렬 곱은 element-wise 연산으로 정의되지 않습니다. 프로그래밍 언어에서 종종 나타나는 array 간 element-wise 곱은 Hadamard product라고 부릅니다.\n\n​    \nDefinition 2.2 (Identity Matrix) \n$R^{n \\times n}$에서 단위행렬(identity matrix)은 대각방향으로는 1, 그 외에는 0을 갖는 $n \\times n$- 행렬로 정의됩니다.\nI_{n} := \n\\begin{bmatrix}\n    1&0&...&0&...&0 \\\\ \n    0&1&...&0&...&0 \\\\\n    \\vdots&\\vdots&\\ddots&\\vdots&\\ddots&\\vdots \\\\\n    0&0&...&1&...&0 \\\\\n    \\vdots&\\vdots&\\ddots&\\vdots&\\ddots&\\vdots \\\\\n    0&0&...&0&...&1 \\\\\n    \\end{bmatrix} \\in R^{m \\times n}지금까지 우리는 행렬의 1) 합, 2) 곱, 3) 단위행렬에 대해서 정의했습니다. 이를 이용하여 매트릭스의 속성을 살펴보면 아래와 같습니다.\n\nAssociativity (결합법칙)\n\\forall A \\in R^{m \\times n},\\ B \\in R^{n \\times p},\\ C \\in R^{p \\times q}\\ :\\ (AB)C = A(BC) \\ \\ (2.18)\nDistributivity (분배법칙)\n\\forall A, B \\in R^{m \\times n},\\ C, D \\in R^{n \\times p}\\ : (A+B)C = AC+BC \\ \\ (2.19a)\\\\\n\\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ A(C+D) = AC + AD \\ \\ (2.19b)\nMultiplication with the identity matrix (단위행렬과의 곱셈)\n\\forall A \\in R^{m \\times n} : I_{m}A = AI_{n} = A, \\ \\ \\ \\ I_{m} \\neq I_{n}\\ for\\ \\  m \\neq n.\n\n​    \n역행렬과 전치행렬​    \nDefinition 2.3 (Inverse)정방행렬 $A \\in R^{n \\times n}$이 있을 때, 매트릭스 $B \\in R^{n \\times n}$와의 관계가 $AB = I_{n} = BA$라는 속성을 만족할 때, $B$는 $A$의 역행렬이라고 부르며 $A^{-1}$로 표기합니다.\n모든 행렬 $A$가 역행렬 $A^{-1}$를 갖진 않습니다. $A$가 역행렬을 가지려면 $A$는 regular / invertible / nonsigular(정칙행렬) 이어야 합니다. 다른 경우는 singular / noninvertible (특이 행렬)이라고 부릅니다.\n역행렬이 존재한다면, 이는 유일합니다. Section 2.3에서는 선형 시스템을 풀어 역행렬을 계산하는 일반적인 방법을 논의합니다.\n​    \nRemark (Existence of the Inverse of a $2 \\times 2$-matrix)\n\nA := \n\\begin{bmatrix}\na_{11} & a_{12} \\\\\na_{21} & a_{22}\n\\end{bmatrix}\n\\in R^{2 \\times 2}.\n\\ \\ \\ \\ (2.21)A^{'} := \n\\begin{bmatrix}\na_{22} & -a_{12} \\\\\n-a_{21} & a_{11}\n\\end{bmatrix}\n\\in R^{2 \\times 2}.\n\\ \\ \\ \\ (2.22) 위와 같은 행렬이 있을 때, 두 행렬을 곱하게 되면 다음과 같은 행렬을 얻을 수 있습니다.\nAA^{'} =\n\\begin{bmatrix}\na_{11}a_{22} - a_{12}a_{21} & 0 \\\\\n0 & a_{11}a_{22} - a_{12}a_{21} \\\\\n\\end{bmatrix} = \n(a_{11}a_{22} - a_{12}a_{21})I\n\\ \\ \\ \\ (2.23) 따라서 역행렬 $A^{-1}$은 아래와 같습니다.\nA^{'} := \n\\frac{1}{a_{11}a_{22} - a_{12}a_{21}}\n\\begin{bmatrix}\na_{22} & -a_{12} \\\\\n-a_{21} & a_{11}\n\\end{bmatrix}이때, a_{11}a_{22} - a_{12}a_{21} \\neq 0 이어야 합니다. Section 4.1에서는 a_{11}a_{22} - a_{12}a_{21}가 2 \\times 2-matrix의 행렬식(determinant)임을 살펴봅니다. 우리는 행렬식을 통해 행렬이 역행렬을 갖는지 확인할 수 있습니다.\n\n​    \nDefinition 2.4 (Transpose)\n행렬 A, B가 다음과 같을 때 A \\in R^{m \\times n}, B \\in R^{n \\times m}, b_{ij} = a_{ji}면 B를 A의 전치행렬(transpose)이라고 부릅니다. 전치행렬은 B = A^{T}로 표기합니다.\n역행렬과 전치행렬의 중요한 속성은 다음과 같습니다.\n$AA^{-1} = I = A^{-1}A \\(AB)^{-1} = B^{-1}A^{-1} \\(A + B)^{-1} \\neq A^{-1} + B^{-1} \\(A^{T})^{T} = A \\(A+B)^{T} = A^{T} + B^{T} \\(AB)^{T} = B^{T}A^{T}$$\n​    \nDefinition 2.5 (Symmetric Matrix, 대칭행렬)\n$A \\in R^{n \\times n}$인 행렬이 대칭행렬이라면 $A = A^{T}$입니다.\n대칭행렬은 정방행렬인 $(n, n)$-행렬에서만 가능하며, 역행렬을 가지며, 역행렬은 $A^{T}$입니다.\n$(A^{-1})^{T} = (A^{T})^{-1} =: A^{-T}$\n​    \nRemark (Sum and Product of Symmetric Matrices)\n\n임의의 두 대칭행렬의 합은 항상 대칭행렬이 됩니다. $A, B \\in R^{n \\times n}$\n대칭행렬의 곱은 항상 정의되지만, 결과는 일반적으로 대칭행렬이 아닙니다.\n $\\begin{bmatrix}1&amp;0 \\0&amp;0\\\\end{bmatrix}\\begin{bmatrix}1&amp;1 \\1&amp;1\\\\end{bmatrix} =\\begin{bmatrix}1&amp;1 \\0&amp;0\\\\end{bmatrix}$\n\n​    \n스칼라에 의한 곱셈행렬이 스칼라에 의해 곱해질 때를 고려해보겠습니다.\n행렬 $A \\in R^{m \\times n}$과 스칼라 $\\lambda \\in R$가 있을 때, $\\lambda A = K$입니다.\n이때, K_{ij} = \\lambda a_{ij}가 됩니다.\n이때, $\\lambda$는 $A$의 원소를 스케일링한다고 볼 수 있습니다.\n스칼라가 $\\lambda, \\psi \\in R$일 때, 행렬과 스칼라 곱의 성질은 아래와 같습니다.\n\nAssociativity (결합법칙)\n(\\lambda \\psi)C = \\lambda(\\psi C), \\ \\ \\  C \\in R^{m \\times n}\\lambda(BC) = (\\lambda B)C = B(\\lambda C) = (BC)\\lambda,\\ \\ B \\in R^{m \\times n}, C \\in R^{n \\times k}(\\lambda C)^{T} = C^{T}\\lambda^{T}  = C^{T}\\lambda = \\lambda C^{T}\\ \\ since\\ \\lambda=\\lambda^{T}\\ \\ for\\ all\\ \\lambda \\in R\nDistributivity  (분배법칙)\n(\\lambda+\\psi)C = \\lambda C + \\psi C,\\ \\ C \\in R \\\\\n\\lambda(B + C) = \\lambda B + \\lambda C,\\ \\ B, C \\in R\n\n​    \n선형 시스템을 간단하게 표현하는 방법\\begin{matrix}\n  2x_{1} + 3x_{2} + 5x_{3} = 1\\\\ \n  4x_{1} - 2x_{2} - 7x_{3} = 8\\\\ \n9x_{1} + 5x_{2} - 3x_{3} = 2 \\\\\n\\end{matrix}위와 같은 선형 시스템이 있을 때, 선형 시스템을 하나하나 표기하는 것이 아닌, 계수(coefficient $a_{ij}$)들의 집합과의 관계로 표기하게 되면, 행렬곱으로 간소화하여 표현할 수 있습니다.\n\\begin{bmatrix}\n  2&3&5\\\\ \n  4&-2&-7\\\\\n  9&5&-3 \n\\end{bmatrix}\n\n\\begin{bmatrix}\n  x_{1}\\\\ \n  x_{2}\\\\\n  x_{3} \n\\end{bmatrix} = \n\n\\begin{bmatrix}\n  1\\\\ \n  8\\\\\n  2 \n\\end{bmatrix}이때, x_{1}은 첫 번째 column을, x_{2}는 두 번째 column을, x_{3}은 세 번째 column을 스케일링한다고 볼 수 있습니다.\n일반적으로 선형 시스템은 행렬 형태로(Ax = b ) 간소화하여 표현할 수 있습니다.\n프로덕트 $Ax$는 $A$의 columns의 선형 조합입니다. 우리는 Section 2.5에서 선형 조합에 대해서 논의해볼 것입니다.","dateCreated":"2020-09-23T23:31:30+09:00","dateModified":"2021-11-26T21:08:48+09:00","datePublished":"2020-09-23T23:31:30+09:00","description":"MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.\n선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.","headline":"(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1509228468518-180dd4864904?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2100&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/","keywords":"Math, Linear algebra, Vector, Linear equation, Matrix","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다. 선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="(MML Book 선형대수 Chapter ~2.2) 선형대수&#x2F;벡터&#x2F;선형시스템&#x2F;매트릭스">
+<meta property="og:url" content="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다. 선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1509228468518-180dd4864904?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2100&q=80">
+<meta property="article:published_time" content="2020-09-23T14:31:30.000Z">
+<meta property="article:modified_time" content="2021-11-26T12:08:48.964Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="Math">
+<meta property="article:tag" content="Linear algebra">
+<meta property="article:tag" content="Vector">
+<meta property="article:tag" content="Linear equation">
+<meta property="article:tag" content="Matrix">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1509228468518-180dd4864904?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2100&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1509228468518-180dd4864904"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1509228468518-180dd4864904"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-09-23T23:31:30+09:00">
+	
+		    Sep 23, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/Math/">Math</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%8B%9C%EC%9E%91%ED%95%98%EA%B8%B0"><span class="toc-text">시작하기</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EB%B2%A1%ED%84%B0%EC%9D%98-%EC%A0%95%EC%9D%98"><span class="toc-text">벡터의 정의</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%B1%85%EC%97%90%EC%84%9C-%EC%B4%88%EC%A0%90%EC%9D%84-%EB%91%90%EA%B3%A0-%EC%84%A4%EB%AA%85%ED%95%98%EA%B3%A0%EC%9E%90-%ED%95%98%EB%8A%94-%EA%B2%83"><span class="toc-text">책에서 초점을 두고 설명하고자 하는 것</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%84%A0%ED%98%95-%EB%8C%80%EC%88%98%EC%99%80-%EA%B8%B0%EA%B3%84%ED%95%99%EC%8A%B5-%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98-%EA%B0%84%EC%9D%98-%EC%83%81%EA%B4%80%EA%B4%80%EA%B3%84"><span class="toc-text">선형 대수와 기계학습 알고리즘 간의 상관관계</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%84%A0%ED%98%95-%EC%8B%9C%EC%8A%A4%ED%85%9C-Systems-of-Linear-Equations"><span class="toc-text">선형 시스템(Systems of Linear Equations)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%84%A0%ED%98%95-%EC%8B%9C%EC%8A%A4%ED%85%9C%EC%97%90-%EB%8C%80%ED%95%9C-%EA%B8%B0%ED%95%98%ED%95%99%EC%A0%81-%ED%95%B4%EC%84%9D-Geometric-Interpretation-of-System-of-Linear-Equation"><span class="toc-text">선형 시스템에 대한 기하학적 해석(Geometric Interpretation of System of Linear Equation)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%ED%96%89%EB%A0%AC-Matrices"><span class="toc-text">행렬 (Matrices)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%ED%96%89%EB%A0%AC%EC%9D%98-%EB%8D%A7%EC%85%88%EA%B3%BC-%EA%B3%B1%EC%85%88"><span class="toc-text">행렬의 덧셈과 곱셈</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%97%AD%ED%96%89%EB%A0%AC%EA%B3%BC-%EC%A0%84%EC%B9%98%ED%96%89%EB%A0%AC"><span class="toc-text">역행렬과 전치행렬</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%8A%A4%EC%B9%BC%EB%9D%BC%EC%97%90-%EC%9D%98%ED%95%9C-%EA%B3%B1%EC%85%88"><span class="toc-text">스칼라에 의한 곱셈</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EC%84%A0%ED%98%95-%EC%8B%9C%EC%8A%A4%ED%85%9C%EC%9D%84-%EA%B0%84%EB%8B%A8%ED%95%98%EA%B2%8C-%ED%91%9C%ED%98%84%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95"><span class="toc-text">선형 시스템을 간단하게 표현하는 방법</span></a></li></ol></li></ol>
+<h2 id="시작하기"><a href="#시작하기" class="headerlink" title="시작하기"></a>시작하기</h2><p>직관적인 개념을 형식화할 때, 공통적인 접근법은 다음과 같습니다.</p>
+<ol>
+<li>객체(object, symbol)의 집합(set)을 만든다.</li>
+<li>만든 객체들을 조작(manipulate)하기 위한 규칙을(rule) 만든다.</li>
+</ol>
+<p>이러한 접근법으로 만들어진 개념들의 집합은 우리에게 대수(Algebra)라고 알려져 있습니다.</p>
+<p><img src="algebra.png" alt="algebra"></p>
+<p>선형대수는 벡터(vector)와 벡터들을 조작하기 위한 규칙들을 연구하는 학문입니다. </p>
+<p>벡터라고 하면 많은 사람이 고등학교에서 배운 geometric vector를 생각합니다. 하지만 책에서는 벡터의 일반화된 개념에 대해서 논의합니다.</p>
+<p>​    </p>
+<h3 id="벡터의-정의"><a href="#벡터의-정의" class="headerlink" title="벡터의 정의"></a>벡터의 정의</h3><p>A라는 유형을 갖는 객체가 있다고 가정해봅시다. 이때,</p>
+<ol>
+<li>객체끼리 더함</li>
+<li>스칼라(scalar, 상수)를 객체에 곱함</li>
+</ol>
+<p>1), 2)라는 연산의 결과로 같은 유형의 객체(A라는 유형의 객체)가 나온다면 이를 벡터라고 정의합니다.</p>
+<p>다시 말해, 수학적인 관점에서 벡터는 아래 두 성질을 충족하면 벡터로 간주합니다.</p>
+<ol>
+<li>벡터끼리 덧셈 연산을(add) 했을 경우 벡터가 나옴</li>
+<li>벡터에 스칼라를 곱했을 때, 벡터가 나옴</li>
+</ol>
+<p>벡터에 대한 대표적인 예는 아래와 같습니다.</p>
+<ol>
+<li><p><strong>Geometric vectors:</strong></p>
+<p>Figure 2.1 (a) 에서 표현하고 있는 geometric vector는  고등학교 수학이나 물리에서 많이 배워 매우 친숙한 벡터입니다.</p>
+</li>
+<li><p><strong>Polynomial vectors:</strong></p>
+<p>Figure 2.1 (b) 에서 표현하고 있는 polynomial(다항식) 또한 벡터입니다.</p>
+<p>두 다항식은 서로 더해질 수 있으며, 더해진 결과 또한 다항식입니다. 그리고 다항식은 스칼라( <script type="math/tex">\lambda \in R</script> )로 곱셈 연산을 해도 다항식입니다. 따라서 다항식 또한 벡터입니다.</p>
+</li>
+</ol>
+<p>그 외에도 3. <strong>Audio signals</strong>, 4. Elements of <script type="math/tex">R^{n}</script> (tuples of <script type="math/tex">n</script> real numbers)도 벡터입니다.</p>
+<blockquote>
+<p>Audio signals, Elements of $R^{n}$은 내용상 크게 문제가 되지 않기 때문에 생략했습니다.</p>
+<p>자세히 알고싶은 분들은 <a target="_blank" rel="noopener" href="https://mml-book.github.io/book/mml-book.pdf">MML Book</a> 18 page를 참고하시면 됩니다.</p>
+</blockquote>
+<p><img src="vector.png" alt="vector"></p>
+<p>​    </p>
+<h3 id="책에서-초점을-두고-설명하고자-하는-것"><a href="#책에서-초점을-두고-설명하고자-하는-것" class="headerlink" title="책에서 초점을 두고 설명하고자 하는 것"></a>책에서 초점을 두고 설명하고자 하는 것</h3><p>본 책에서는 다음과 같은 내용에 초점을 두고 선형 대수를 설명합니다.</p>
+<ol>
+<li>선형 대수의 대부분 알고리즘은 <script type="math/tex">R^{n}</script> 공간에서 정의가 됩니다. 따라서 책에서는 주로 <script type="math/tex">R^{n}</script> 공간의 벡터에 대해서 초점을 맞춰 설명합니다. 특히 chapter 8에서 데이터를  <script type="math/tex">R^{n}</script>공간의 벡터로 간주하고 설명할 것입니다.</li>
+<li><strong>유한 차원 벡터 공간에(finite dimensional vector space) 초점을 맞춥니다. 유한 차원 벡터 공간의 경우, 모든 종류의 벡터와  <script type="math/tex">R^{n}</script>공간 간의 1:1 대응이 존재합니다.</strong></li>
+</ol>
+<p>​    </p>
+<h3 id="선형-대수와-기계학습-알고리즘-간의-상관관계"><a href="#선형-대수와-기계학습-알고리즘-간의-상관관계" class="headerlink" title="선형 대수와 기계학습 알고리즘 간의 상관관계"></a>선형 대수와 기계학습 알고리즘 간의 상관관계</h3><p>만약 내가 새로운 연산자(operator)를 만들었다고 생각해봅시다. 이때, <strong>내가 제안한 연산(operation)으로 만들어지는 것들의 집합은 무엇인가?</strong>라는 궁금증이 생길 수 있습니다.</p>
+<p>이를 선형대수 관점에서 다시 생각해보면, <strong>작은 벡터의 집합에서 시작해서 서로 더해지고, 스케일링 되었을 때의 그 결과인 벡터들의 집합은 무엇인가?</strong>와 같습니다. 이 질문에 대한 답은 Section 2.4에서 언급할 vector space가 됩니다. vector space의 개념과 속성은 기계학습 알고리즘의 기초가 됩니다.</p>
+<p>선형대수는 기계학습과 수학에서 중요한 역할을 합니다. 이번 장에서 소개되는 개념들은 chapter 3에서 geometry에 대한 아이디어로 확장됩니다. chapter 5에서는 벡터 미적분(vector calculus)에 대해서 논의합니다. 벡터 미적분은 매트릭스 연산에 대한 지식이 필수적으로 요구됩니다. chapter 10에서는 PCA를 활용한 차원 축소를 위해 사영(projection)을 사용할 것입니다. chapter 9에서는 선형 회귀(linear regression)에 대해서 논의합니다. 선형 회귀에서 선형대수는 least-square problems을 푸는 중요한 역할을 합니다.</p>
+<p><img src="concept_mindmap.png" alt="concept_mindmap"></p>
+<p>​    </p>
+<h2 id="선형-시스템-Systems-of-Linear-Equations"><a href="#선형-시스템-Systems-of-Linear-Equations" class="headerlink" title="선형 시스템(Systems of Linear Equations)"></a>선형 시스템(Systems of Linear Equations)</h2><p>선형 시스템은 선형 대수에서 중심적인 역할을 합니다. 많은 문제는 선형 시스템으로 형식화되며, 선형대수는 이를 풀 수 있는 도구를 제공합니다.</p>
+<p>​    </p>
+<p><strong>Example 2.1</strong></p>
+<p>어떤 회사가 리소스 <script type="math/tex">R_{1}, ... ,R_{N}</script> 가 들어가는 제품 <script type="math/tex">N_{1}, ... ,N_{n}</script> 을 생산합니다. 이때, <script type="math/tex">N_{j}</script>의 일부 파트를 생산하기 위해서 리소스 <script type="math/tex">R_{i}</script>의 일부인 <script type="math/tex">a_{ij}</script>가 필요합니다. (<script type="math/tex">i=1,...,m</script>, <script type="math/tex">j=1,...,n</script>).</p>
+<p>우리의 목적은 한정된 리소스에서 얼마나 많은 제품을 만들 수 있는지에 대한 최적의 생산 계획을 찾는 것입니다. 예를 들어 “우리에게 리소스 <script type="math/tex">b_{i}</script>가 있을 때,  제품 <script type="math/tex">N_{j}</script>의 일부 파트인 <script type="math/tex">x_{j}</script>를 얼마나 많이 생산할 수 있는가?”와 같은 질문의 답을 찾는 것이지요.</p>
+<p>만약 우리가 제품과 대응되는 파트들 <script type="math/tex">x_{i},...,x_{n}</script>을 생산할 때, 다음과 같은 리소스가 필요하게 됩니다.</p>
+<script type="math/tex; mode=display">a_{i1}x_{1} + ... + a_{in}x_{n}\ \  (2.2)</script><p>이때, 최적의 생산계획은 실수공간에 존재하게 됩니다<script type="math/tex">(x_{1},...,x_{n}) \in R^{n}</script>. 따라서, 최적의 생산 계획은 아래의 선형 시스템을 만족하는 해를 찾으면 됩니다.</p>
+<script type="math/tex; mode=display">\begin{matrix}
+  a_{11}x_{1} + ... + a_{1n}x_{n} =  b_{1}\\ 
+  ...\\
+  a_{m1}x_{1} + ... + a_{mn}x_{n} = b_{m} 
+\end{matrix}, \ \ \ a_{ij} \in R, \ b_{i} \in R \ \ (2.3)</script><p>식 (2.3)은 일반적인 형태의 선형 시스템입니다.</p>
+<script type="math/tex; mode=display">x_{1},...,x_{n},\ \ \ \ (x_{1},...,x_{n}) \in R^{n}</script><p>은 시스템에서 미지수가 되며, 식 (2.3) 을 만족하는 해가 이 선형 시스템의 해가 됩니다.</p>
+<p>​    </p>
+<p><strong>Example 2.2</strong></p>
+<p>다음 선형 시스템이 있을 때,</p>
+<script type="math/tex; mode=display">\begin{matrix}
+  x_{1} + x_{2} + x_{3} = 3\ \ \ \  (1)\\ 
+  x_{1} - x_{2} + 2x_{3} = 2\ \ \ (2)\\ 
+  2x_{1} + 3x_{3} = 1 \ \ \ \ \ \ \ \ \ \ (3)\\
+\end{matrix}</script><p>이 선형 시스템은 해가 없습니다. (1)과 (2)를 더하면 <script type="math/tex">2x_{1} + 3x_{3} = 5</script>입니다. 이 결과를 (3)과 빼게되면, 부등식은 모순이 됩니다. 이 경우에는 선형 시스템에 해는 없게 됩니다.</p>
+<p>또 다른 선형 시스템을 살펴봅시다.</p>
+<script type="math/tex; mode=display">\begin{matrix}
+  x_{1} + x_{2} + x_{3} = 3\ \ \ \  \ (1)\\ 
+  x_{1} - x_{2} + 2x_{3} = 2\ \ \ (2)\\ 
+\ \ \ \ \ \ \ x_{2} + x_{3} = 2 \ \ \ \ \ \ \ (3)\\
+\end{matrix}</script><p>이를 위와 같은 방식으로 풀게 되면, <script type="math/tex">(x_{1} = 1, x_{2} = 1, x_{3}=1)</script>이 유일한 해(유일해; unique solution)가 됩니다.</p>
+<p>마지막으로 아래 선형 시스템을 살펴봅시다.</p>
+<script type="math/tex; mode=display">\begin{matrix}
+  x_{1} + x_{2} + x_{3} = 3\ \ \ \  \ (1)\\ 
+  x_{1} - x_{2} + 2x_{3} = 2\ \ \ (2)\\ 
+2x_{1} + 3x_{3} = 5 \ \ \ \ \ \ \ \ \ \ (3)\\
+\end{matrix}</script><p>이를 똑같이 풀어보면, (1)과 (2)를 더한 결과가 (3)과 같음을 확인할 수 있습니다.</p>
+<p>이때, (1)과 (2)를 이용해서 <script type="math/tex">2x_{1} = 5 - 3x_3{}</script>, <script type="math/tex">2x_{2} = 1+x_{3}</script>을 얻을 수 있습니다.</p>
+<p>$x_{3} = a \in R$로 자유 변수(free variable)로 정의하면, 다음과 같은 해를 찾을 수 있습니다.</p>
+<script type="math/tex; mode=display">(\frac{5}{2} - \frac{3}{2}a, \frac{1}{2}+ \frac{1}{2}a, a),\ \  a \in R</script><p>이 해는 무수히 많은 해가 존재한다는 것을 의미하며, 기하학적으로 Figure 2.3과 같습니다.</p>
+<p><img src="solution_of_linear_equation.png" alt="solution_of_linear_equation"></p>
+<p>일반적으로 실수값을 갖는 선형 시스템으로 구성된 시스템에서 우리는 아래와 같은 종류의 해를 구할 수 있습니다.</p>
+<ol>
+<li>해가 없음</li>
+<li>단 하나의 해</li>
+<li>무한히 많은 해</li>
+</ol>
+<p>선형 회귀(linear regression)은 Example 2.1과 같은 예제에서 선형 시스템을 풀지 못했을 경우 이를 푸는 방법입니다.</p>
+<p>​    </p>
+<h3 id="선형-시스템에-대한-기하학적-해석-Geometric-Interpretation-of-System-of-Linear-Equation"><a href="#선형-시스템에-대한-기하학적-해석-Geometric-Interpretation-of-System-of-Linear-Equation" class="headerlink" title="선형 시스템에 대한 기하학적 해석(Geometric Interpretation of System of Linear Equation)"></a>선형 시스템에 대한 기하학적 해석(Geometric Interpretation of System of Linear Equation)</h3><p>두 개의 변수(<script type="math/tex">x_{1}, x_{2}</script>)를 갖는 선형 시스템에서 각각의 시스템은 <script type="math/tex">x_{1}</script> - <script type="math/tex">x_{2}</script>  평면에서 하나의 선이 됩니다.</p>
+<p>만약에 각 시스템을 모두 만족하는 해가 있다면, 이 해는 각 선의 교집합이 됩니다.</p>
+<p>이 교집합은 다음과 같은 형태로 나타납니다.</p>
+<ol>
+<li>점이 되거나(교차) </li>
+<li>선이 되거나(겹침)</li>
+<li>공집합(평행; 해가 없음).</li>
+</ol>
+<p>이를 확장하여 변수가 세 개가 된다면, 각 시스템은 면(plane)이 되며, 교집합은 선(line)이 됩니다.</p>
+<p>이때의 교집합은 1)면, 2)선, 3)점, 4)공집합(해가 없음)으로 나타나게 됩니다.</p>
+<p>​    </p>
+<h2 id="행렬-Matrices"><a href="#행렬-Matrices" class="headerlink" title="행렬 (Matrices)"></a>행렬 (Matrices)</h2><p>행렬 또한 선형 대수에서 중요한 역할을 합니다. 행렬은 선형 시스템을 간단히 표기하는데 사용하기도 하지만, Section 2.7에서 살펴볼 선형 함수(linear mapping)를 표현하기도 합니다.</p>
+<p>행렬의 재밌는 주제를 논의하기 전에 먼저, 1) 행렬이 무엇이고, 2) 행렬로 어떤 연산이 가능한지 살펴봅시다.</p>
+<p>​    </p>
+<p><strong>Definition 2.1 (Matrix)</strong></p>
+<p> $m, n \in N,\ \ N \in R$인 $(m, n)$ 행렬 $A$는 $m$ rows와 $n$ columns으로 구성된 직사각형 구조를 갖습니다. </p>
+<p>행렬의 원소 $a_{ij},\ i=1,…,m,\ j=1,…,n$ 는 $m\cdot n$ - tuple입니다.</p>
+<script type="math/tex; mode=display">A = \begin{bmatrix}
+        a_{11} & a_{12} & ... & a_{1n}\\ 
+        a_{21} & a_{22} & ... & a_{2n}\\
+        \vdots & \vdots & & \vdots \\
+        a_{m1} & a_{m2} & ... &  a_{mn} 
+    \end{bmatrix}, \ \ a_{ij} \in R</script><p>일반적으로 $(1, n)$-행렬은 rows라고 부르고, $(m, 1)$-행렬은 columns라고 부릅니다.</p>
+<p>rows, colums와 같이 특별한 행렬은 row, column vectors라고 부릅니다.</p>
+<p>$R^{m \times n}$는 실수공간에 있는 $(m, n)$-행렬입니다.</p>
+<p> $A \in R^{m \times n}$는 모든 $n$ columns의 행렬이 길게 붙여진 $a \in R^{mn}$과 같은 표현입니다.</p>
+<blockquote>
+<p>행렬의 표현이 달라질 뿐이지, 벡터 개념에서는 벗어나지 않는다는 것에 주목합시다.</p>
+<p>표현이 변경된 행렬은 다른 행렬을 더해도 같은 형태를 유지하는 행렬이며, 스칼라와 곱해도 같은 형태를 유지하는 행렬입니다. </p>
+<p>추가적으로, 우리가 알고 있는 행렬곱의 연산자(opration)를 일부 변경하면 <script type="math/tex">R^{nm}</script> 행렬 또한 행렬곱 정의가 가능합니다.</p>
+</blockquote>
+<p><img src="matrix.png" alt="matrix"></p>
+<p>​    </p>
+<h3 id="행렬의-덧셈과-곱셈"><a href="#행렬의-덧셈과-곱셈" class="headerlink" title="행렬의 덧셈과 곱셈"></a>행렬의 덧셈과 곱셈</h3><p>두 행렬 $A \in R^{m \times n}$, $B \in R^{m \times n}$의 합은 element-wise sum으로 정의됩니다</p>
+<script type="math/tex; mode=display">A + B := \begin{bmatrix}
+        a_{11} + b_{11} & ... & a_{1n} + b_{1n} \\ 
+        \vdots &  & \vdots \\
+        a_{m1} + b_{m1} & ... & a_{mn} + b_{mn}
+        \end{bmatrix} \in R^{m \times n}</script><p>두 행렬 $A \in R^{m \times n}$, $B \in R^{n \times k}$가 있을 때, 행렬곱( $C = AB \in R^{m \times k}$)의 결과인 행렬 <script type="math/tex">C</script> 원소 $c_{ij}$는 다음과 같이 계산합니다</p>
+<script type="math/tex; mode=display">c_{ij} = \Sigma_{l=1}^{n} a_{il}b_{lj},\ \ \ \ i = 1,...,m,\ \ \ \ \ j = 1,...,k.</script><p>위와 같이 $A$의 $i$th row의 원소와 $B$의 $j$th columns의 원소끼리 곱하는 연산을 Section 3.2에서는 <strong>dot product</strong>라고 부르며, $A \cdot B$로 표기합니다.</p>
+<p>​    </p>
+<p><strong>Remark</strong></p>
+<blockquote>
+<p>행렬의 곱은 인접 차원이 같아야합니다. 예를 들어 $n \times k$ 행렬 $A$는 $k \times m$ 행렬 $B$와 곱셈 연산을 수행할 수 있습니다. 이때, 행렬 $B$는 행렬 $A$ 우측에 있어야만 합니다.</p>
+<script type="math/tex; mode=display">\underbrace{A}_{n \times k} \underbrace{B}_{k \times m} =
+\underbrace{C}_{n \times m}</script><p>프로덕트(product) $BA$는 이웃 차원이 맞지 않기 때문에 정의되지 않습니다.</p>
+</blockquote>
+<p>​    </p>
+<p><strong>Remark</strong></p>
+<blockquote>
+<p>행렬 곱은 element-wise 연산으로 정의되지 않습니다. 프로그래밍 언어에서 종종 나타나는 array 간 element-wise 곱은 <strong><em>Hadamard product</em></strong>라고 부릅니다.</p>
+</blockquote>
+<p>​    </p>
+<p><strong>Definition 2.2 (Identity Matrix)</strong> </p>
+<p>$R^{n \times n}$에서 단위행렬(identity matrix)은 대각방향으로는 1, 그 외에는 0을 갖는 $n \times n$- 행렬로 정의됩니다.</p>
+<script type="math/tex; mode=display">I_{n} := 
+\begin{bmatrix}
+    1&0&...&0&...&0 \\ 
+    0&1&...&0&...&0 \\
+    \vdots&\vdots&\ddots&\vdots&\ddots&\vdots \\
+    0&0&...&1&...&0 \\
+    \vdots&\vdots&\ddots&\vdots&\ddots&\vdots \\
+    0&0&...&0&...&1 \\
+    \end{bmatrix} \in R^{m \times n}</script><p>지금까지 우리는 행렬의 1) 합, 2) 곱, 3) 단위행렬에 대해서 정의했습니다. 이를 이용하여 매트릭스의 속성을 살펴보면 아래와 같습니다.</p>
+<ul>
+<li><p>Associativity (결합법칙)</p>
+<script type="math/tex; mode=display">\forall A \in R^{m \times n},\ B \in R^{n \times p},\ C \in R^{p \times q}\ :\ (AB)C = A(BC) \ \ (2.18)</script></li>
+<li><p>Distributivity (분배법칙)</p>
+<script type="math/tex; mode=display">\forall A, B \in R^{m \times n},\ C, D \in R^{n \times p}\ : (A+B)C = AC+BC \ \ (2.19a)\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ A(C+D) = AC + AD \ \ (2.19b)</script></li>
+<li><p>Multiplication with the identity matrix (단위행렬과의 곱셈)</p>
+<script type="math/tex; mode=display">\forall A \in R^{m \times n} : I_{m}A = AI_{n} = A, \ \ \ \ I_{m} \neq I_{n}\ for\ \  m \neq n.</script></li>
+</ul>
+<p>​    </p>
+<h3 id="역행렬과-전치행렬"><a href="#역행렬과-전치행렬" class="headerlink" title="역행렬과 전치행렬"></a>역행렬과 전치행렬</h3><p>​    </p>
+<p><strong>Definition 2.3 (Inverse)</strong><br>정방행렬 $A \in R^{n \times n}$이 있을 때, 매트릭스 $B \in R^{n \times n}$와의 관계가 $AB = I_{n} = BA$라는 속성을 만족할 때, $B$는 $A$의 역행렬이라고 부르며 $A^{-1}$로 표기합니다.</p>
+<p>모든 행렬 $A$가 역행렬 $A^{-1}$를 갖진 않습니다. $A$가 역행렬을 가지려면 $A$는 regular / invertible / nonsigular(정칙행렬) 이어야 합니다. 다른 경우는 singular / noninvertible (특이 행렬)이라고 부릅니다.</p>
+<p>역행렬이 존재한다면, 이는 유일합니다. Section 2.3에서는 선형 시스템을 풀어 역행렬을 계산하는 일반적인 방법을 논의합니다.</p>
+<p>​    </p>
+<p><strong>Remark</strong> (Existence of the Inverse of a $2 \times 2$-matrix)</p>
+<blockquote>
+<script type="math/tex; mode=display">A := 
+\begin{bmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22}
+\end{bmatrix}
+\in R^{2 \times 2}.
+\ \ \ \ (2.21)</script><script type="math/tex; mode=display">A^{'} := 
+\begin{bmatrix}
+a_{22} & -a_{12} \\
+-a_{21} & a_{11}
+\end{bmatrix}
+\in R^{2 \times 2}.
+\ \ \ \ (2.22)</script><p> 위와 같은 행렬이 있을 때, 두 행렬을 곱하게 되면 다음과 같은 행렬을 얻을 수 있습니다.</p>
+<script type="math/tex; mode=display">AA^{'} =
+\begin{bmatrix}
+a_{11}a_{22} - a_{12}a_{21} & 0 \\
+0 & a_{11}a_{22} - a_{12}a_{21} \\
+\end{bmatrix} = 
+(a_{11}a_{22} - a_{12}a_{21})I
+\ \ \ \ (2.23)</script><p> 따라서 역행렬 $A^{-1}$은 아래와 같습니다.</p>
+<script type="math/tex; mode=display">A^{'} := 
+\frac{1}{a_{11}a_{22} - a_{12}a_{21}}
+\begin{bmatrix}
+a_{22} & -a_{12} \\
+-a_{21} & a_{11}
+\end{bmatrix}</script><p>이때, <script type="math/tex">a_{11}a_{22} - a_{12}a_{21} \neq 0</script> 이어야 합니다. Section 4.1에서는 <script type="math/tex">a_{11}a_{22} - a_{12}a_{21}</script>가 <script type="math/tex">2 \times 2</script>-matrix의 행렬식(determinant)임을 살펴봅니다. 우리는 행렬식을 통해 행렬이 역행렬을 갖는지 확인할 수 있습니다.</p>
+</blockquote>
+<p>​    </p>
+<p><strong>Definition 2.4</strong> (Transpose)</p>
+<p>행렬 <script type="math/tex">A, B</script>가 다음과 같을 때 <script type="math/tex">A \in R^{m \times n}</script>, <script type="math/tex">B \in R^{n \times m}</script>, <script type="math/tex">b_{ij} = a_{ji}</script>면 <script type="math/tex">B</script>를 <script type="math/tex">A</script>의 전치행렬(transpose)이라고 부릅니다. 전치행렬은 <script type="math/tex">B = A^{T}</script>로 표기합니다.</p>
+<p>역행렬과 전치행렬의 중요한 속성은 다음과 같습니다.</p>
+<p>$AA^{-1} = I = A^{-1}A \<br>(AB)^{-1} = B^{-1}A^{-1} \<br>(A + B)^{-1} \neq A^{-1} + B^{-1} \<br>(A^{T})^{T} = A \<br>(A+B)^{T} = A^{T} + B^{T} \<br>(AB)^{T} = B^{T}A^{T}$$</p>
+<p>​    </p>
+<p><strong>Definition 2.5</strong> (Symmetric Matrix, 대칭행렬)</p>
+<p>$A \in R^{n \times n}$인 행렬이 대칭행렬이라면 $A = A^{T}$입니다.</p>
+<p>대칭행렬은 정방행렬인 $(n, n)$-행렬에서만 가능하며, 역행렬을 가지며, 역행렬은 $A^{T}$입니다.</p>
+<p>$(A^{-1})^{T} = (A^{T})^{-1} =: A^{-T}$</p>
+<p>​    </p>
+<p><strong>Remark</strong> (Sum and Product of Symmetric Matrices)</p>
+<blockquote>
+<p>임의의 두 대칭행렬의 합은 항상 대칭행렬이 됩니다. $A, B \in R^{n \times n}$</p>
+<p>대칭행렬의 곱은 항상 정의되지만, 결과는 일반적으로 대칭행렬이 아닙니다.</p>
+<p> $\begin{bmatrix}<br>1&amp;0 \<br>0&amp;0\<br>\end{bmatrix}<br>\begin{bmatrix}<br>1&amp;1 \<br>1&amp;1\<br>\end{bmatrix} =<br>\begin{bmatrix}<br>1&amp;1 \<br>0&amp;0\<br>\end{bmatrix}$</p>
+</blockquote>
+<p>​    </p>
+<h3 id="스칼라에-의한-곱셈"><a href="#스칼라에-의한-곱셈" class="headerlink" title="스칼라에 의한 곱셈"></a>스칼라에 의한 곱셈</h3><p>행렬이 스칼라에 의해 곱해질 때를 고려해보겠습니다.</p>
+<p>행렬 $A \in R^{m \times n}$과 스칼라 $\lambda \in R$가 있을 때, $\lambda A = K$입니다.</p>
+<p>이때, <script type="math/tex">K_{ij} = \lambda a_{ij}</script>가 됩니다.</p>
+<p>이때, $\lambda$는 $A$의 원소를 스케일링한다고 볼 수 있습니다.</p>
+<p>스칼라가 $\lambda, \psi \in R$일 때, 행렬과 스칼라 곱의 성질은 아래와 같습니다.</p>
+<ul>
+<li><p>Associativity (결합법칙)</p>
+<script type="math/tex; mode=display">(\lambda \psi)C = \lambda(\psi C), \ \ \  C \in R^{m \times n}</script><script type="math/tex; mode=display">\lambda(BC) = (\lambda B)C = B(\lambda C) = (BC)\lambda,\ \ B \in R^{m \times n}, C \in R^{n \times k}</script><script type="math/tex; mode=display">(\lambda C)^{T} = C^{T}\lambda^{T}  = C^{T}\lambda = \lambda C^{T}\ \ since\ \lambda=\lambda^{T}\ \ for\ all\ \lambda \in R</script></li>
+<li><p>Distributivity  (분배법칙)</p>
+<script type="math/tex; mode=display">(\lambda+\psi)C = \lambda C + \psi C,\ \ C \in R \\
+\lambda(B + C) = \lambda B + \lambda C,\ \ B, C \in R</script></li>
+</ul>
+<p>​    </p>
+<h3 id="선형-시스템을-간단하게-표현하는-방법"><a href="#선형-시스템을-간단하게-표현하는-방법" class="headerlink" title="선형 시스템을 간단하게 표현하는 방법"></a>선형 시스템을 간단하게 표현하는 방법</h3><script type="math/tex; mode=display">\begin{matrix}
+  2x_{1} + 3x_{2} + 5x_{3} = 1\\ 
+  4x_{1} - 2x_{2} - 7x_{3} = 8\\ 
+9x_{1} + 5x_{2} - 3x_{3} = 2 \\
+\end{matrix}</script><p>위와 같은 선형 시스템이 있을 때, 선형 시스템을 하나하나 표기하는 것이 아닌, 계수(coefficient $a_{ij}$)들의 집합과의 관계로 표기하게 되면, 행렬곱으로 간소화하여 표현할 수 있습니다.</p>
+<script type="math/tex; mode=display">\begin{bmatrix}
+  2&3&5\\ 
+  4&-2&-7\\
+  9&5&-3 
+\end{bmatrix}
+
+\begin{bmatrix}
+  x_{1}\\ 
+  x_{2}\\
+  x_{3} 
+\end{bmatrix} = 
+
+\begin{bmatrix}
+  1\\ 
+  8\\
+  2 
+\end{bmatrix}</script><p>이때, <script type="math/tex">x_{1}</script>은 첫 번째 column을, <script type="math/tex">x_{2}</script>는 두 번째 column을, <script type="math/tex">x_{3}</script>은 세 번째 column을 스케일링한다고 볼 수 있습니다.</p>
+<p>일반적으로 선형 시스템은 행렬 형태로(<script type="math/tex">Ax = b</script> ) 간소화하여 표현할 수 있습니다.</p>
+<p>프로덕트 $Ax$는 $A$의 columns의 선형 조합입니다. 우리는 Section 2.5에서 선형 조합에 대해서 논의해볼 것입니다.</p>
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-ckwjb6wno00097toc83j68qqf"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1509228468518-180dd4864904?ixlib=rb-1.2.1#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1509228468518-180dd4864904?ixlib=rb-1.2.1#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Linear-algebra/" rel="tag">Linear algebra</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Linear-equation/" rel="tag">Linear equation</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Math/" rel="tag">Math</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Matrix/" rel="tag">Matrix</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Vector/" rel="tag">Vector</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                    data-tooltip="(MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                    aria-label="PREVIOUS: (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    data-tooltip="(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                    aria-label="NEXT: (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2022 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                    data-tooltip="(MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                    aria-label="PREVIOUS: (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                    data-tooltip="(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                    aria-label="NEXT: (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                16 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,1159 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Martin Hwang">
+    <title>마르코프 체인 - Markov Chain - Martin Hwang</title>
+    <meta name="author" content="Martin Hwang">
+    
+        <meta name="keywords" content="cloud,deeplearning,signal processing,data scientists,Markov Chain,Markov Process">
+    
+    
+        <link rel="icon" href="http://ssaru.github.io/assets/images/favicon.ico">
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg"},"articleBody":"\n\n\n\n\nStable Diffusion에 대해서 공부하다보니 마르코프 체인이 나와서 살펴봐야할 것 같아 정리한 글이다.마르코프 체인 관련된 블로그 포스팅 등 여러 글들을 참고하여 정리하였다.\n시작마르코프 체인은 ‘현재 몇 가지의 선택지가 있고, 과거 비율을 충분한 회수로 확인할 수 있다면 미래에 특정한 선택지를 고를 확률에 대해서도 표현할 수 있지 않을까’라는 고민에서 출발했다.\n쇼핑몰을 운영하는 기업은 특정 조건의 고객군이 로그인 후 어떤 검색을 거쳐 장바구니에 넣고 최종 결재를 하게 되었는지, 그리고 해당 조건의 고객군이 미래에 어떠한 선택을 하게 될 것인지 궁금해할 것이고, 이는 마르코프 체인을 활용하여 풀 수 있을 것이다.\n마르코프 체인(Markov Chain; Markov Process)마르코프 체인이란 마르코프 특성(Markov Property)를 지니는 이산시간(discrete time) 확률과정(stochastic process)이라고 정의한다.\n\n확률과정: 시간에 따라 “어떤 사건이 발생할 확률”이 변화하는 과정\n마르코프 특성: 과거 상태들( $$s_1, s_2, …, s_{t-1}$$ )과 현재 상태($$s_t$$)가 주어졌을 때, 미래 상태($$s_{t+1}$$)는 과거 상태와는 독립적으로 현재 상태에 의해서만 결정되는 것을 의미한다. (혹은 일정 기간의 상태에만 영향을 받는 것)\n\n즉, 과거와 현재 상태 모두를 고려했을 때, 미래 상태가 나타날 확률과 현재 상태만을 고려했을 때, 미래 상태가 발생할 확률이 동일하다. 이를 수식으로 표현하면 아래와 같다.\n$$P[s_{t+1}|s_{t}] = P[s_{t+1} | s_1, \\cdots, s_t]$$\n마르코프 프로세스는 과거 상태를 기억하지 않기 때문에 메모리 리스(memoryless)프로세스라고 불리며, 마르코프 체인(Markov chain)이라 불리기도 한다.\n어떤 상태에서 다음 단계의 상태로 변화하는 것을 변이(transition)라고 하고, 그 확률을 상태 변이확률(state transition probability)라고 한다. 시간 $t$에서의 상태를 $s$라고 하고, 시간 $t+1$에서의 상태를 $s^{‘}$이라고 할 때, 상태 변이확률은 아래 식과 같이 표현할 수 있다.\n마르코프 체인 중 $$N$$차 마르코프 체인이 있는 듯하다. 이 경우를 “메모리 k 마르코프 체인”이라고도 부른다.\n$$    r=0,\\ P(o_t|o_{t-1}o_{t-1}\\cdots o_{1}) = P(o_t) \\    r=1,\\ P(o_t|o_{t-1}o_{t-1}\\cdots o_{1}) = P(o_t|o_{t-1}) \\    r=2,\\ P(o_t|o_{t-1}o_{t-1}\\cdots o_{1}) = P(o_t|o_{t-1}, o_{t-1}) \\$$\n\n$$P_{ss^{‘}} = P[s_{t+1}=s^{‘}| s_{t}=s]$$\n마르코프 체인 계산 방법마르코프 체인을 활용해 오늘 날씨를 통해 내일의 날씨를 확률적으로 예측하고, 다시 내일의 날씨 정보에 기반해서 모레의 날씨를 예측하는 행위를 충분히 반복했다고 가정하자. 날씨에 관한 확률의 묶음이 특정 성질을 반복할 때, 반복 계산의 어느 지점에서 날씨가 흐릴지, 비가 올지, 맑을지에 대한 확률이 특정하게 수렴하게 될 수 있다. 따라서 마르코프 체인은 오늘 흐림이라서 내일은 무조건 비가 아니라 내일도 흐릴 확률은 어느 정도인지, 혹은 맑거나 눈이 내릴 확률은 어느 정도인지 확률적으로 표현하게 된다.\n문제를 간소화하여 맑음, 흐림 2가지의 조건만 활용해서 마르코프 체인을 계산해보자.\n\n위 확률값을 상태 전이도(State Transition Diagram)로 표현하면 아래와 같다.\n\n이는 아래와 같이 전이확률 행렬로 표현할 수 있다.\n\n위의 전이 흐름도는 아래와 같이 행렬 곱을 통하여 계산할 수 있다. 모레의 확률 변화는 오늘과 내일의 전이가 연속되어 일어나는 경우이기 때문에 전이행렬을 곱하여 계산한다.\n만약 지난 3년간 특정 일의 날씨 중 80%가 맑았다면 특정일 기준 모레가 맑을 확률은 0.8 x 0.565 + 0.2 x 0.362 = 0.524이기 때문에 52.4% 확률로 예측할 수 있게 된다.\n이러한 상태에서 충분히 많은 횟수를 반복한다면 어느 순간에는 전이행렬이 변하지 않는 상태가 오는데 이를 두고 **안정상태(steady state)**라 부르고, 확률이 직전 상태와 동일하게 수렴하게 된다. 이러한 확률 분포를 **정적 분포(Stationary Distribution)**라고 부른다.\n안정상태(Steady state)와 정적분포(Stationary distribution)현재 상태를 알고 있고 전이 확률행렬을 알고 있다면, 다음 단계의 상태도 알 수 있을 것이다. 마찬가지로 다음 단계의 상태를 구했고 전이 확률행렬을 이미 알고 있으니 그다음 단계의 상태도 알 수 있을 것이다. 이를 식으로 나타내면 아래와 같다.\n$$P^{n}{ij} = [P{ij}]^{n}$$\n$P_{ij}$는 상태 $i$에서 $j$로 가는 상태전이 확률이고, $n$의 의미는 $n$번째 상태이다. 만약 $n\\rightarrow \\infty$라면 아래와 같은 수식이 성립한다.\n$$\\pi = \\pi P$$\n이때, $\\pi$는 각 상태의 확률분포이고 $P$는 전이행렬이다. 이 상태에서 다음 상태를 알기 위해 전이행렬을 더 곱한다 해도 같은 값을 유지하는데, 이를 **안정상태(Steady state)**라고 하고 이때의 확률분포를 **정적분포(Stationary distribution)**라고 한다.\n생각\n토스 PO 세션에서 Carrying Capacity를 언급했는데, 마르코프 체인으로 Carrying Capacity를 측정해볼 수 있지 않을까?\n그런데, A라는 App을 쓴 사람이 다시 해당 App을 쓸 확률(Retension Probability)은 알 수 있지만 다른 App들을 쓰다가, A라는 App을 쓸 확률(New, Resurrection Probability)은 알 수 없는 것이 문제이다.\nInflow / Outflow / Retention 확률이 다른 변수에 의해 결정된다라고 했을 때, 마르코프 체인이 성립될 수 있나? 그 가정이 틀렸어도 마르코프 체인으로 어느정도 풀어낼 수 있나?\n\n\n\n이어지는 토픽\n마르코프 보상 프로세스 (Markov Reward Process) → 강화학습과 이어짐\n마르코프 디시전 프로세스(Markov Desision Process) → 강화학습과 이어짐\n마르코프 체인 분석(Markov Chain Analysis)\n전이행렬을 고유값(Eigenvalue), 고유벡터(Eigenvector)로 제곱하는 방식으로 구할 수 있다. $$ P^{k} = QD^{k}Q^{-1} $$\nCarrying Capacity와 Markov Chain을 연결지어 생각해보기\n마르코프 체인 몬테 카를로\n몬테카를로 시뮬레이션\n\nReference\n마르코프 체인에 관하여\n[강화학습] 마코프 프로세스(=마코프 체인) 제대로 이해하기\nMarkov Chain\n마코프 체인 응용\n마르코프 체인 | 고급수학2 | 행렬 세특\n마르코프 연쇄\nMarkov chain\n","dateCreated":"2023-01-03T00:47:00+09:00","dateModified":"2023-01-03T01:43:47+09:00","datePublished":"2023-01-03T00:47:00+09:00","description":"Markov Chain에 대해서 설명한다.","headline":"마르코프 체인 - Markov Chain","image":["cover.jpeg","cover.jpeg","https://images.unsplash.com/photo-1488272690691-2636704d6000?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1167&q=80"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://ssaru.github.io/2023/01/03/20230103-markov_chain/"},"publisher":{"@type":"Organization","name":"Martin Hwang","sameAs":["https://github.com/ssaru","http://stackoverflow.com/users/7027201/donghyun-hwang","https://facebook.com/profile.php?id=100011640813154","https://www.linkedin.com/in/martin-hwang/"],"image":"martin.jpg","logo":{"@type":"ImageObject","url":"martin.jpg"}},"url":"http://ssaru.github.io/2023/01/03/20230103-markov_chain/","keywords":"AI, ML","thumbnailUrl":"cover.jpeg"}</script>
+    <meta name="description" content="Markov Chain에 대해서 설명한다.">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="마르코프 체인 - Markov Chain">
+<meta property="og:url" content="http://ssaru.github.io/2023/01/03/20230103-markov_chain/index.html">
+<meta property="og:site_name" content="Martin Hwang">
+<meta property="og:description" content="Markov Chain에 대해서 설명한다.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://images.unsplash.com/photo-1488272690691-2636704d6000?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1167&q=80">
+<meta property="article:published_time" content="2023-01-02T15:47:00.000Z">
+<meta property="article:modified_time" content="2023-01-02T16:43:47.101Z">
+<meta property="article:author" content="Martin Hwang">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="ML">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1488272690691-2636704d6000?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1167&q=80">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/assets/images/martin.jpg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2023/01/03/20230103-markov_chain/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2023/01/03/20230103-markov_chain/cover.jpeg"/>
+    
+    
+        <meta property="og:image" content="http://ssaru.github.io/2023/01/03/20230103-markov_chain/cover.jpeg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://ssaru.github.io/2023/01/03/20230103-markov_chain/cover.jpeg"/>
+    
+    
+        
+            <meta property="og:image" content="https://images.unsplash.com/photo-1488272690691-2636704d6000"/>
+            <meta class="swiftype" name="image" data-type="enum" content="https://images.unsplash.com/photo-1488272690691-2636704d6000"/>
+        
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/all.css">
+
+    
+<link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+
+    
+<link rel="stylesheet" href="/assets/css/thumbs.css">
+
+    
+<link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-144181147-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-144181147-1');
+    </script>
+
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/%20"
+            aria-label=""
+        >
+            Martin Hwang
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Martin Hwang</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Software Engineer in the field of Machine Learning</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/%20"
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Search"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Search</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/ssaru" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users/7027201/donghyun-hwang" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/profile.php?id=100011640813154" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/martin-hwang/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2023/01/03/20230103-markov_chain/cover.jpeg');"
+             data-behavior="4">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            마르코프 체인 - Markov Chain
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-01-03T00:47:00+09:00">
+	
+		    Jan 03, 2023
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/AI/">AI</a>, <a class="category-link" href="/categories/AI/ML/">ML</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+
+
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%8B%9C%EC%9E%91"><span class="toc-text">시작</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EB%A7%88%EB%A5%B4%EC%BD%94%ED%94%84-%EC%B2%B4%EC%9D%B8-Markov-Chain-Markov-Process"><span class="toc-text">마르코프 체인(Markov Chain; Markov Process)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EB%A7%88%EB%A5%B4%EC%BD%94%ED%94%84-%EC%B2%B4%EC%9D%B8-%EA%B3%84%EC%82%B0-%EB%B0%A9%EB%B2%95"><span class="toc-text">마르코프 체인 계산 방법</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%95%88%EC%A0%95%EC%83%81%ED%83%9C-Steady-state-%EC%99%80-%EC%A0%95%EC%A0%81%EB%B6%84%ED%8F%AC-Stationary-distribution"><span class="toc-text">안정상태(Steady state)와 정적분포(Stationary distribution)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%83%9D%EA%B0%81"><span class="toc-text">생각</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EC%9D%B4%EC%96%B4%EC%A7%80%EB%8A%94-%ED%86%A0%ED%94%BD"><span class="toc-text">이어지는 토픽</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+
+<p>Stable Diffusion에 대해서 공부하다보니 마르코프 체인이 나와서 살펴봐야할 것 같아 정리한 글이다.<br>마르코프 체인 관련된 블로그 포스팅 등 여러 글들을 참고하여 정리하였다.</p>
+<h2 id="시작"><a href="#시작" class="headerlink" title="시작"></a>시작</h2><p>마르코프 체인은 ‘<strong>현재 몇 가지의 선택지가 있고, 과거 비율을 충분한 회수로 확인할 수 있다면 미래에 특정한 선택지를 고를 확률에 대해서도 표현할 수 있지 않을까</strong>’라는 고민에서 출발했다.</p>
+<p>쇼핑몰을 운영하는 기업은 특정 조건의 고객군이 로그인 후 어떤 검색을 거쳐 장바구니에 넣고 최종 결재를 하게 되었는지, 그리고 해당 조건의 고객군이 미래에 어떠한 선택을 하게 될 것인지 궁금해할 것이고, 이는 마르코프 체인을 활용하여 풀 수 있을 것이다.</p>
+<h2 id="마르코프-체인-Markov-Chain-Markov-Process"><a href="#마르코프-체인-Markov-Chain-Markov-Process" class="headerlink" title="마르코프 체인(Markov Chain; Markov Process)"></a>마르코프 체인(Markov Chain; Markov Process)</h2><p>마르코프 체인이란 마르코프 특성(Markov Property)를 지니는 이산시간(discrete time) 확률과정(stochastic process)이라고 정의한다.</p>
+<ul>
+<li>확률과정: 시간에 따라 “어떤 사건이 발생할 확률”이 변화하는 과정</li>
+<li>마르코프 특성: 과거 상태들( $$s_1, s_2, …, s_{t-1}$$ )과 현재 상태($$s_t$$)가 주어졌을 때, 미래 상태($$s_{t+1}$$)는 과거 상태와는 독립적으로 현재 상태에 의해서만 결정되는 것을 의미한다. (혹은 일정 기간의 상태에만 영향을 받는 것)</li>
+</ul>
+<p>즉, 과거와 현재 상태 모두를 고려했을 때, 미래 상태가 나타날 확률과 현재 상태만을 고려했을 때, 미래 상태가 발생할 확률이 동일하다. 이를 수식으로 표현하면 아래와 같다.</p>
+<p>$$<br>P[s_{t+1}|s_{t}] = P[s_{t+1} | s_1, \cdots, s_t]<br>$$</p>
+<p>마르코프 프로세스는 과거 상태를 기억하지 않기 때문에 메모리 리스(memoryless)프로세스라고 불리며, 마르코프 체인(Markov chain)이라 불리기도 한다.</p>
+<p>어떤 상태에서 다음 단계의 상태로 변화하는 것을 변이(transition)라고 하고, 그 확률을 상태 변이확률(state transition probability)라고 한다. 시간 $t$에서의 상태를 $s$라고 하고, 시간 $t+1$에서의 상태를 $s^{‘}$이라고 할 때, 상태 변이확률은 아래 식과 같이 표현할 수 있다.</p>
+<p>마르코프 체인 중 $$N$$차 마르코프 체인이 있는 듯하다. 이 경우를 “<strong>메모리 k 마르코프 체인</strong>”이라고도 부른다.</p>
+<p>$$<br>    r=0,\ P(o_t|o_{t-1}o_{t-1}\cdots o_{1}) = P(o_t) \<br>    r=1,\ P(o_t|o_{t-1}o_{t-1}\cdots o_{1}) = P(o_t|o_{t-1}) \<br>    r=2,\ P(o_t|o_{t-1}o_{t-1}\cdots o_{1}) = P(o_t|o_{t-1}, o_{t-1}) \<br>$$</p>
+<p><img src="markov_chain.png" alt="N차 마르코프 체인"></p>
+<p>$$<br>P_{ss^{‘}} = P[s_{t+1}=s^{‘}| s_{t}=s]<br>$$</p>
+<h2 id="마르코프-체인-계산-방법"><a href="#마르코프-체인-계산-방법" class="headerlink" title="마르코프 체인 계산 방법"></a>마르코프 체인 계산 방법</h2><p>마르코프 체인을 활용해 오늘 날씨를 통해 내일의 날씨를 확률적으로 예측하고, 다시 내일의 날씨 정보에 기반해서 모레의 날씨를 예측하는 행위를 충분히 반복했다고 가정하자. 날씨에 관한 확률의 묶음이 특정 성질을 반복할 때, 반복 계산의 어느 지점에서 날씨가 흐릴지, 비가 올지, 맑을지에 대한 확률이 특정하게 수렴하게 될 수 있다. 따라서 마르코프 체인은 오늘 흐림이라서 내일은 무조건 비가 아니라 내일도 흐릴 확률은 어느 정도인지, 혹은 맑거나 눈이 내릴 확률은 어느 정도인지 확률적으로 표현하게 된다.</p>
+<p>문제를 간소화하여 맑음, 흐림 2가지의 조건만 활용해서 마르코프 체인을 계산해보자.</p>
+<p><img src="weather_probability.png" alt="날씨 전이 확률"></p>
+<p>위 확률값을 상태 전이도(State Transition Diagram)로 표현하면 아래와 같다.</p>
+<p><img src="state_transition_diagram.png" alt="상태 전이 확률"></p>
+<p>이는 아래와 같이 전이확률 행렬로 표현할 수 있다.</p>
+<p><img src="state_transition_matrix.png" alt="상태 전이 행렬"><br><img src="state_transition_flow.png" alt="상태 전이 흐름도"></p>
+<p>위의 전이 흐름도는 아래와 같이 행렬 곱을 통하여 계산할 수 있다. 모레의 확률 변화는 오늘과 내일의 전이가 연속되어 일어나는 경우이기 때문에 전이행렬을 곱하여 계산한다.</p>
+<p><img src="calculate_markov_chain.png" alt="마르코프 체인 게산"><br>만약 지난 3년간 특정 일의 날씨 중 80%가 맑았다면 특정일 기준 모레가 맑을 확률은 0.8 x 0.565 + 0.2 x 0.362 = 0.524이기 때문에 52.4% 확률로 예측할 수 있게 된다.</p>
+<p>이러한 상태에서 충분히 많은 횟수를 반복한다면 어느 순간에는 전이행렬이 변하지 않는 상태가 오는데 이를 두고 **안정상태(steady state)**라 부르고, 확률이 직전 상태와 동일하게 수렴하게 된다. 이러한 확률 분포를 **정적 분포(Stationary Distribution)**라고 부른다.</p>
+<h2 id="안정상태-Steady-state-와-정적분포-Stationary-distribution"><a href="#안정상태-Steady-state-와-정적분포-Stationary-distribution" class="headerlink" title="안정상태(Steady state)와 정적분포(Stationary distribution)"></a>안정상태(Steady state)와 정적분포(Stationary distribution)</h2><p>현재 상태를 알고 있고 전이 확률행렬을 알고 있다면, 다음 단계의 상태도 알 수 있을 것이다. 마찬가지로 다음 단계의 상태를 구했고 전이 확률행렬을 이미 알고 있으니 그다음 단계의 상태도 알 수 있을 것이다. 이를 식으로 나타내면 아래와 같다.</p>
+<p>$$<br>P^{n}<em>{ij} = [P</em>{ij}]^{n}<br>$$</p>
+<p>$P_{ij}$는 상태 $i$에서 $j$로 가는 상태전이 확률이고, $n$의 의미는 $n$번째 상태이다. 만약 $n\rightarrow \infty$라면 아래와 같은 수식이 성립한다.</p>
+<p>$$<br>\pi = \pi P<br>$$</p>
+<p>이때, $\pi$는 각 상태의 확률분포이고 $P$는 전이행렬이다. 이 상태에서 다음 상태를 알기 위해 전이행렬을 더 곱한다 해도 같은 값을 유지하는데, 이를 **안정상태(Steady state)**라고 하고 이때의 확률분포를 **정적분포(Stationary distribution)**라고 한다.</p>
+<h2 id="생각"><a href="#생각" class="headerlink" title="생각"></a>생각</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=tcrr2QiXt9M&t=474s">토스 PO 세션에서 Carrying Capacity</a>를 언급했는데, 마르코프 체인으로 Carrying Capacity를 측정해볼 수 있지 않을까?<ul>
+<li>그런데, A라는 App을 쓴 사람이 다시 해당 App을 쓸 확률(Retension Probability)은 알 수 있지만 다른 App들을 쓰다가, A라는 App을 쓸 확률(New, Resurrection Probability)은 알 수 없는 것이 문제이다.</li>
+<li>Inflow / Outflow / Retention 확률이 다른 변수에 의해 결정된다라고 했을 때, 마르코프 체인이 성립될 수 있나? 그 가정이 틀렸어도 마르코프 체인으로 어느정도 풀어낼 수 있나?</li>
+</ul>
+</li>
+</ul>
+<h2 id="이어지는-토픽"><a href="#이어지는-토픽" class="headerlink" title="이어지는 토픽"></a>이어지는 토픽</h2><ol>
+<li>마르코프 보상 프로세스 (Markov Reward Process) → 강화학습과 이어짐</li>
+<li>마르코프 디시전 프로세스(Markov Desision Process) → 강화학습과 이어짐</li>
+<li><a target="_blank" rel="noopener" href="https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=sigmagil&logNo=221482425278">마르코프 체인 분석(Markov Chain Analysis)</a></li>
+<li>전이행렬을 고유값(Eigenvalue), 고유벡터(Eigenvector)로 제곱하는 방식으로 구할 수 있다. $$<br> P^{k} = QD^{k}Q^{-1}<br> $$</li>
+<li>Carrying Capacity와 Markov Chain을 연결지어 생각해보기</li>
+<li><a target="_blank" rel="noopener" href="https://angeloyeo.github.io/2020/09/17/MCMC.html">마르코프 체인 몬테 카를로</a></li>
+<li>몬테카를로 시뮬레이션</li>
+</ol>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.puzzledata.com/blog190423/">마르코프 체인에 관하여</a></li>
+<li><a target="_blank" rel="noopener" href="https://bskyvision.com/entry/%EB%A7%88%EC%BD%94%ED%94%84-%ED%94%84%EB%A1%9C%EC%84%B8%EC%8A%A4%EB%A7%88%EC%BD%94%ED%94%84-%EC%B2%B4%EC%9D%B8%EB%9E%80">[강화학습] 마코프 프로세스(=마코프 체인) 제대로 이해하기</a></li>
+<li><a target="_blank" rel="noopener" href="https://sites.google.com/site/machlearnwiki/RBM/markov-chain">Markov Chain</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.rpubs.com/skkong/markov_chain">마코프 체인 응용</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=Yh62wN2kMkA">마르코프 체인 | 고급수학2 | 행렬 세특</a></li>
+<li><a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/%EB%A7%88%EB%A5%B4%EC%BD%94%ED%94%84_%EC%97%B0%EC%87%84">마르코프 연쇄</a></li>
+<li><a target="_blank" rel="noopener" href="https://velog.io/@qkrdbwls191/Markov-chain">Markov chain</a></li>
+</ol>
+            
+
+    
+    <div class="image-gallery">
+        <div class="image-gallery-metabar">
+            <span>Gallery: image</span>
+        </div>
+        <div class="image-gallery-photos ">
+            
+            
+            <div class="photo-box">
+                <a
+                    class="photo-box-inner fancybox"
+                    data-fancybox="gallery-clcf0k6yh00008zocaowu6ld3"
+                    data-caption=""
+                    title=""
+                    target="_blank" rel="noopener" href="https://images.unsplash.com/photo-1488272690691-2636704d6000?ixlib=rb-4.0.3#.jpg"
+                    aria-label=""
+                >
+                    
+
+                        <img
+                                class="photo" src="https://images.unsplash.com/photo-1488272690691-2636704d6000?ixlib=rb-4.0.3#.jpg"
+                        >
+                    
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/AI/" rel="tag">AI</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/ML/" rel="tag">ML</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/12/26/20221226-product_management_sacred_seven/"
+                    data-tooltip="7가지 코드 - Code 1"
+                    aria-label="NEXT: 7가지 코드 - Code 1"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2023 Martin Hwang. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/12/26/20221226-product_management_sacred_seven/"
+                    data-tooltip="7가지 코드 - Code 1"
+                    aria-label="NEXT: 7가지 코드 - Code 1"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://ssaru.github.io/2023/01/03/20230103-markov_chain/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/martin.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Martin Hwang</h4>
+        
+            <div id="about-card-bio"><p>Software Engineer in the field of Machine Learning</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Data scientists in Viva Republic</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Seoul, South korea
+            </div>
+        
+    </div>
+</div>
+
+        
+            <div id="algolia-search-modal" class="modal-container">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="close-button"><i class="fa fa-times"></i></span>
+            <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+                <span class="searchby-algolia-text text-color-light text-small">by</span>
+                <img class="searchby-algolia-logo" src="/assets/images/logo-algolia-nebula-blue-full.svg">
+            </a>
+            <i class="search-icon fa fa-search"></i>
+            <form id="algolia-search-form">
+                <input type="text" id="algolia-search-input" name="search"
+                    class="form-control input--large search-input" placeholder="Search "
+                    />
+            </form>
+        </div>
+        <div class="modal-body">
+            <div class="no-result text-color-light text-center">no post found</div>
+            <div class="results">
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/07/25/20190725-Connect_GPU_to_Minikube/"
+                            aria-label=": Connect GPU to Minikube"
+                        >
+                            <h3 class="media-heading">Connect GPU to Minikube</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jul 25, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅에는 Minikube에서 GPU 컨테이너 사용이 가능하도록 설정하는 방법에 대해서 포스팅한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2019/08/06/20190806-How_the_Eye_of_AI_Sees/"
+                            aria-label=": How the Eye of A.I Sees"
+                        >
+                            <h3 class="media-heading">How the Eye of A.I Sees</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 6, 2019
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><!--toc-->
+<p>이번 포스팅은 논문 <a target="_blank" rel="noopener" href="https://openreview.net/pdf?id=Bygh9j09KX">ImageNet - Train CNNs are biased towards texture; increasing shape bias improves accuracy and robustness</a>을 읽고 읽은 내용을 포스팅한다.<br></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/01/05/20200105-2019_retrospective/"
+                            aria-label=": 2019년 회고"
+                        >
+                            <h3 class="media-heading">2019년 회고</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Jan 5, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 2019년의 나를 돌아보고 2020년을 계획하는 회고를 적어볼까 한다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/08/27/20200827-A_Quick_Tutorial_on_Ray/"
+                            aria-label=": (번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray"
+                        >
+                            <h3 class="media-heading">(번역) Modern Parallel and Distributed Python-A Quick Tutorial on Ray</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Aug 27, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>이번 포스팅은 Ray에 대해서 소개합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/09/23/20200921-MML_Book_Chap_2.3/"
+                            aria-label=": (MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter ~2.2) 선형대수/벡터/선형시스템/매트릭스</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Sep 23, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 2 ~ 2.2까지 정리한 내용입니다.</p>
+<p>선형대수가 어떤 학문인지, 벡터, 선형시스템, 매트릭스의 정의는 무엇이고, 어떤 속성을 갖는지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.3_lengths_and%20_distances/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.3) Lengths and Distances"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.3) Lengths and Distances</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.3, Length and Distances에 대해서 정리한 내용입니다.</p>
+<p>Length와 Distances가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.4_angles_and_orthogonality/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.4) Angles and Orthogonality"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.4) Angles and Orthogonality</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.4. Angles and Orthogonality에 대해서 정리한 내용입니다.</p>
+<p>Angle과 Orthogonality가 무엇인지에 대해서 살펴봅니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2020/11/01/20201101-mml_book_chap3.5_orthonormal_basis/"
+                            aria-label=": (MML Book 선형대수 Chapter 3.5) Orthonormal Basis"
+                        >
+                            <h3 class="media-heading">(MML Book 선형대수 Chapter 3.5) Orthonormal Basis</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    Nov 1, 2020
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>MML book 스터디를 진행하고있습니다. 이번 포스팅은 MML book Chapter 3.5. Orthonormal Basis에 대해서 정리한 내용입니다.</p>
+<p>Chapter 2.6.1에서 basis vector의 속성을 살펴봤었습니다. 이 때, $n$-차원 벡터 공간에서 서로 선형 독립인 $n$개의 basis vector가 필요함을 배웠었습니다.</p>
+<p>또한 Chapter 3.3과 3.4에서는 inner product를 벡터의 길이, 벡터 간 각도를 구하기 위해서 사용했었습니다. 이번 Chapter에서는 basis vector가 서로 orthogonal하고 basis vector의 길이가 1인 orthonormal basis basis에 대해서 이야기할 것입니다.</p>
+<p>이 orthonormal basis의 개념은 나중에 support vector machine과 PCA를 다루는 Chapter 12, Chapter10에서 활용하게 될 것입니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/05/20210505-til_install_rtx3090_supported_pytorch/"
+                            aria-label=": (TIL) RTX 3090을 지원하는 PyTorch 버전설치"
+                        >
+                            <h3 class="media-heading">(TIL) RTX 3090을 지원하는 PyTorch 버전설치</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 5, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>2021.05.05 현재 RTX3090은 CUDA11 이상을 지원하는 딥러닝 프레임워크에 버전에서만 사용할 수 있습니다. 하지만 단순하게 <code>pip install torch==1.7.1 torchvision==0.8.2</code> 형태로 설치하면 <code>CUDA error: no kernel image is available for execution on the device</code> 에러를 마주할 수 있습니다. 이 때에는 반드시 <code>pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html</code>형태로 설치해주어야합니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+                <div class="media">
+                    
+                    <div class="media-left">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <img class="media-image" src="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/cover.jpeg" width="90" height="90"/>
+                        </a>
+                    </div>
+                    
+                    <div class="media-body">
+                        <a
+                            class="link-unstyled"
+                            href="http://ssaru.github.io/2021/05/09/20210509-til_set_locale_in_alpine_linux/"
+                            aria-label=": (TIL) Alpine Linux에서 locale 설정하기"
+                        >
+                            <h3 class="media-heading">(TIL) Alpine Linux에서 locale 설정하기</h3>
+                        </a>
+                        <span class="media-meta">
+                            <span class="media-date text-small">
+                                
+                                    May 9, 2021
+                                
+                            </span>
+                        </span>
+                        <div class="media-content hide-xs font-merryweather"><p>Alpine linux는 용량이 80MB이고, 컨테이너 이미지는 5MB밖에 안되는 초경량화된 리눅스 배포판입니다. alpine linux는 용량을 줄이기 위해 시스템의 기본 C runtime을 <a target="_blank" rel="noopener" href="https://ko.wikipedia.org/wiki/GNU_C_라이브러리">glibc</a> 대신 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Musl">musl libc</a> 를 사용하는데요. 이로 인해 제가 즐겨쓰는 ubuntu기반의 작업들이 동작하지 않는 경우가 있습니다. 그 중 ubuntu에서의 locale 명령어가 대표적입니다. ubuntu의 locale은 glibc 기반으로 구현되어있기 때문에 alpine linux에서는 <code>apk add locale</code> 명령어로는 설치할 수 없습니다. 이번 포스팅은 alpine linux에서 locale을 설정하는 방법에 대해서 다룹니다.</p></div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <hr>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p class="results-count text-medium"
+                data-message-zero="no post found"
+                data-message-one="1 post found"
+                data-message-other="{n} posts found">
+                17 posts found
+            </p>
+        </div>
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/jquery.js"></script>
+
+
+<script src="/assets/js/jquery.fancybox.js"></script>
+
+
+<script src="/assets/js/thumbs.js"></script>
+
+
+<script src="/assets/js/tranquilpeak.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+    
+<script src="/assets/js/moment-with-locales.js"></script>
+
+    
+<script src="/assets/js/algoliasearch.js"></script>
+
+    <script>
+      var algoliaClient = algoliasearch('M60MWL1GJ0', 'af8ef83d732cf34d3f250ab4335e23cb');
+      var algoliaIndex = algoliaClient.initIndex('SSARU-HEXO');
+    </script>
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

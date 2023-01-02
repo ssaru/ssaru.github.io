@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://ssaru.github.io/2023/01/03/20230103-markov_chain/</loc>
+    
+    <lastmod>2023-01-02</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://ssaru.github.io/2022/12/26/20221226-product_management_sacred_seven/</loc>
     
     <lastmod>2022-12-26</lastmod>
@@ -137,7 +144,7 @@
 
   <url>
     <loc>http://ssaru.github.io/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -145,182 +152,196 @@
   
   <url>
     <loc>http://ssaru.github.io/tags/Minikube/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/GPU/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Kubernetes/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Retrospective/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Python/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Distributed/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Parallel/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Ray/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Math/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Linear-algebra/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Vector/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Linear-equation/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Matrix/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/PyTorch/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/RTX3090/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/CNN/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Convolutional-Neural-Network/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Shape-Bias/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Texture-Bias/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/RTX-3090/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Alpine-Linux/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Locale/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Recommender-Systems/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Neural-Network/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/OKR/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/tags/Product/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://ssaru.github.io/tags/AI/</loc>
+    <lastmod>2023-01-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://ssaru.github.io/tags/ML/</loc>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -329,77 +350,91 @@
   
   <url>
     <loc>http://ssaru.github.io/categories/Software/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Retrospective/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Math/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Software/Cloud/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/TIL/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Software/Disbritubed-Computing/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Ai/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Ai/Paper-review/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Retrospective/Essay/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/OKR/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://ssaru.github.io/categories/Product/</loc>
-    <lastmod>2022-12-26</lastmod>
+    <lastmod>2023-01-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://ssaru.github.io/categories/AI/</loc>
+    <lastmod>2023-01-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://ssaru.github.io/categories/AI/ML/</loc>
+    <lastmod>2023-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
